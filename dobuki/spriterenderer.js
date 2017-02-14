@@ -135,11 +135,15 @@
             spriteRenderer.images[i].zIndex =  Number.MAX_VALUE;
         }
 
-        spriteRenderer.images.sort(imageCompare);
+        DOK.quickSort(spriteRenderer.images,getIndex);
         return spriteRenderer.images;
     }
 
-    function imageCompare(a,b) {
+    function getIndex(a) {
+        return a.zIndex;
+    }
+
+    function compareIndex(a,b) {
         return a.zIndex - b.zIndex;
     }
 
@@ -195,7 +199,7 @@
             }
         }
 
-        spriteRenderer.images.sort(imageCompare);
+        DOK.turboSort(spriteRenderer.images,getIndex,compareIndex);
         return spriteRenderer.images;
     }
 
