@@ -6,9 +6,13 @@
 
     var canvases = {};
     var cuts = {};
+    var mapping = {};
+    var mapcount = 1;
+
     var textures = [null];
     var slots = {};
     var SPRITE_SHEET_SIZE = 2048;
+    var planeGeometry = new THREE.PlaneBufferGeometry(1, 1);
 
     /**
      *  HEADER
@@ -142,8 +146,17 @@
         if(cuts[url]) {
             return cuts[url];
         }
+        if(typeof(url) !== "string") {
+            url = mapping[url];
+        }
         var canvas = fetchCanvas(url.split("|"));
         var slot = core.getSlot(canvas);
+        if(!mapping[url]) {
+            mapping[url] = mapcount;
+            mapping[mapcount] = url;
+            mapcount++;
+        }
+
         if(slot) {
             slots[canvas.getAttribute("url")] = slot;
             canvas.addEventListener("update", updateSpritesheetEvent);
@@ -153,14 +166,28 @@
             var uvY = slot.y / SPRITE_SHEET_SIZE;
             var uvW = canvas.width / SPRITE_SHEET_SIZE;
             var uvH = canvas.height / SPRITE_SHEET_SIZE;
+            var vertices = planeGeometry.attributes.position.array;
+            var uvOrder = planeGeometry.attributes.uv.array;
+
+            var size = [ canvas.width, canvas.height, 1 ];
+            var cutcut = [ uvX, 1-uvY-uvH, uvX+uvW, 1-uvY ];
+
             var cut = {
+                index: mapping[url],
                 tex:slot.tex,
-                cut:[
-                    uvX, 1-uvY-uvH, uvX+uvW, 1-uvY,
-                ],
-                size: [ canvas.width, canvas.height, 1 ],
+//                cut:[ uvX, 1-uvY-uvH, uvX+uvW, 1-uvY ],
+//                size: [ canvas.width, canvas.height, 1 ],
+                vertices: new Float32Array(vertices.length),
+                uv: new Float32Array(uvOrder.length),
             };
-            cuts[url] = cut;
+            for(var v=0; v<vertices.length; v++) {
+                cut.vertices[v] = vertices[v] * size[v%3];
+            }
+            for(var u=0; u<uvOrder.length; u++) {
+                cut.uv[u] = cutcut[uvOrder[u]*2 + u%2];
+            }
+
+            cuts[url] = cuts[cut.index] = cut;
             return cut;
         } else {
             return null;
@@ -170,12 +197,18 @@
     function preLoad(images) {
         if(typeof(images)==="string") {
             getCut(images);
+            return mapping[images];
         } else {
             for(var prop in images) {
-                if(images.hasOwnProperty(prop))
-                    core.preLoad(images[prop]);
+                if(images.hasOwnProperty(prop)) {
+                    var index = core.preLoad(images[prop]);
+                    if(index) {
+                        images[prop] = index;
+                    }
+                }
             }
         }
+        return null;
     }
 
     function updateSpritesheetEvent(event) {

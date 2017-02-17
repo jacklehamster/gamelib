@@ -93,7 +93,7 @@
         };
         var it = {
             next : function() {
-                if(!stack.length) return done;
+                if(stack.length===0) return done;
                 do {
                     var topStack = stack[stack.length - 1];
                     var subObj = topStack.next();

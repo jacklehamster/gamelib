@@ -5,19 +5,32 @@
 }(window, (function (core, global) { 'use strict';
 
     var point = { x: 0, y: 0, active:false };
+    var downTime = 0;
+    var centerizer = {
+        loop: function() {
+            var camera = core.getCamera();
+            camera.rotation.z *= .8;
+            if (Math.abs(camera.rotation.z) < .01) {
+                camera.rotation.z = 0;
+                core.untrigger(this);
+            }
+        }
+    };
 
     /**
      *  HEADER
      */
     core.requireScripts([
         'setup.js',
+        'menu.js',
+        'camera.js',
     ]);
     core.logScript();
 
     /**
      *  FUNCTION DEFINITIONS
      */
-    function addControlBall(camera) {
+    function addControlBall(cam) {
         var ball = document.createElement("canvas");
         ball.width = 100;
         ball.height = 100;
@@ -34,7 +47,35 @@
         context.fillStyle = 'green';
         context.fill();
 
+        var menus = {
+            camera: {
+                selection: 0,
+                id: "startMenu",
+                position: [30,30],
+                list: [
+                    "CAMERA PERSPECTIVE",
+                ],
+                action: function(selection) {
+                    if(selection===0) {
+                        var cam3d = DOK.isCamera3d();
+                        cam3d = !cam3d;
+                        this.list[selection] = cam3d ? "CAMERA PERSPECTIVE" : "CAMERA ORTHOGRAPHIC";
+                        DOK.refreshMenus();
+                        DOK.setCamera3d(cam3d);
+                    }
+                },
+            },
+        };
+
+        ball.addEventListener("mouseover", function(e) {
+            core.showMenu(menus.camera, true);
+        });
+        ball.addEventListener("mouseout", function(e) {
+            core.hideMenu(menus.camera);
+        });
+
         ball.addEventListener("mousedown", function(e) {
+            var camera = core.getCamera();
             point.x = e.pageX;
             point.y = e.pageY;
             activateBallControl();
@@ -51,10 +92,15 @@
 
     function ballMouseMove(e) {
         if(e.buttons===1 && point.active) {
+            var camera = core.getCamera();
             var dx = e.pageX - point.x;
             var dy = e.pageY - point.y;
-            camera.rotateY(dx/100);
-            camera.rotateX(dy/100);
+            if(DOK.anyKeyPressed(16)) {
+                camera.rotateZ(-dx/100);
+            } else {
+                camera.rotateY(-dx/100);
+            }
+            camera.rotateX(-dy/100);
             point.x = e.pageX;
             point.y = e.pageY;
         } else {
@@ -65,10 +111,15 @@
 
     function boxMouseMove(e) {
         if(e.buttons===1 && point.active) {
+            var camera = core.getCamera();
             var dx = e.pageX - point.x;
             var dy = e.pageY - point.y;
-            camera.translateX(-dx*10);
-            camera.translateY(dy*10);
+            camera.translateX(dx*10);
+            if(DOK.anyKeyPressed(16)) {
+                camera.translateZ(dy*10);
+            } else {
+                camera.translateY(-dy*10);
+            }
             point.x = e.pageX;
             point.y = e.pageY;
         } else {
@@ -90,6 +141,7 @@
             document.addEventListener("mousemove", ballMouseMove);
             document.addEventListener("mouseup", mouseUpBall);
             point.active = true;
+            downTime = core.time;
         }
     }
 
@@ -98,6 +150,10 @@
             document.removeEventListener("mousemove", ballMouseMove);
             document.removeEventListener("mouseup", mouseUpBall);
             point.active = false;
+            if(core.time - downTime < 100) {
+                core.trigger(centerizer);
+            }
+            downTime = 0;
         }
     }
 
@@ -106,6 +162,7 @@
             document.addEventListener("mousemove", boxMouseMove);
             document.addEventListener("mouseup", mouseUpBox);
             point.active = true;
+            downTime = core.time;
         }
     }
 
@@ -114,10 +171,11 @@
             document.removeEventListener("mousemove", boxMouseMove);
             document.removeEventListener("mouseup", mouseUpBox);
             point.active = false;
+            downTime = 0;
         }
     }
 
-    function addControlBox(camera) {
+    function addControlBox(cam) {
         var box = document.createElement("canvas");
         box.width = 100;
         box.height = 100;
@@ -135,6 +193,7 @@
         context.fill();
 
         box.addEventListener("mousedown", function(e) {
+            var camera = core.getCamera();
             point.x = e.pageX;
             point.y = e.pageY;
             activateBoxControl();

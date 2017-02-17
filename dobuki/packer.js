@@ -6,7 +6,7 @@
     
     var MAX_TEXTURES = 16;
     var SPRITE_SHEET_SIZE = 2048;
-    var CHUNKSIZES = 32;
+    var CHUNKSIZES = 8;
     
     var chunks = [];
 
@@ -65,8 +65,8 @@
     
     function fillSlot(tex,x,y,canvas) {
         if(!chunks[tex]) chunks[tex] = [];
-        var chunkWidth = Math.ceil(canvas.width/CHUNKSIZES);
-        var chunkHeight = Math.ceil(canvas.height/CHUNKSIZES);
+        var chunkWidth = Math.ceil((canvas.width+1)/CHUNKSIZES);
+        var chunkHeight = Math.ceil((canvas.height+1)/CHUNKSIZES);
     
         for(var xi=0;xi<chunkWidth;xi++) {
             if(!chunks[tex][x/CHUNKSIZES+xi]) chunks[tex][x/CHUNKSIZES+xi] = [];

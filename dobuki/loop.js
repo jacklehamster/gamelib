@@ -18,13 +18,14 @@
     */
    function loop(time) {
         if(coreLoops) {
+            var loops = coreLoops;
             requestAnimationFrame( loop );
             if(time<=core.time + period) {
                 return;
             }
             core.time = Math.floor(time/period)*period;
-            for(var i=0;i<coreLoops.length;i++)  {
-                coreLoops[i]();
+            for(var i=0;i<loops.length;i++)  {
+                loops[i]();
             }
             frameCount ++;
             if(time-lastCount>1000) {

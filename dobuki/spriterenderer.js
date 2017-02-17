@@ -5,9 +5,10 @@
  }(window, (function (core) { 'use strict';
 
     var planeGeometry = new THREE.PlaneBufferGeometry(1, 1);
-    var defaultQuaternion = new THREE.Quaternion();
+    var identityQuaternionArray = (new THREE.Quaternion()).toArray(new Float32Array(4));
     var spriteRenderers = [];
-    var tempVector = new THREE.Vector3(), tempQuaternion = new THREE.Quaternion();
+    var tempVector = new THREE.Vector3(), tempQuaternion = new THREE.Quaternion(), cameraQuaternionArray = new Float32Array(4);
+    var uvOrder = planeGeometry.attributes.uv.array;
 
     /**
      *  HEADER
@@ -29,10 +30,14 @@
         this.imageCount = 0;
         this.shift = { x: 0, y: 0 };
         this.mesh = createMesh();
-        this.displaySprites = displaySprites.bind(this);
-        this.destroy = destroySprite.bind(this);
         spriteRenderers.push(this);
     }
+
+    SpriteRenderer.prototype.destroy = destroySprite;
+    SpriteRenderer.prototype.clear = clear;
+    SpriteRenderer.prototype.render = render;
+    SpriteRenderer.prototype.updateGraphics = updateGraphics;
+    SpriteRenderer.prototype.addSpritePerspective = addSpritePerspective;
 
     /**
      *  FUNCTION DEFINITIONS
@@ -40,6 +45,38 @@
 
     function getPlaneGeometry() {
         return planeGeometry;
+    }
+
+    function clear() {
+        this.imageCount = 0;
+    }
+
+    function addSpritePerspective(pos, offset, url, light, faceCamera) {
+        var cut = core.getCut(url);
+        if(cut) {
+            if(!this.images[this.imageCount]) {
+                this.images[this.imageCount] = {
+                    position:new Float32Array(3),
+                    vertices: null,
+                    texture:0,
+                    uv:null,
+                    light:1,
+                    zIndex:0,
+                    quaternionArray: null,
+                };
+            }
+
+            var image = this.images[this.imageCount];
+            image.quaternionArray = faceCamera ? null : identityQuaternionArray;
+            image.position[0] = (pos[0] + offset[0] - this.shift.x);
+            image.position[1] = (pos[1] + offset[1] - this.shift.y);
+            image.position[2] = (pos[2]);
+            image.vertices = cut.vertices;
+            image.texture = cut.tex;
+            image.uv = cut.uv;
+            image.light = light;
+            this.imageCount++;
+        }
     }
 
     function createMesh() {
@@ -73,219 +110,116 @@
         return mesh;
     }
 
-    function collectImagesOrthographic(spriteContainer, spriteRenderer, camera) {
-        var planeGeometry = getPlaneGeometry();
-        var minZindex = Number.MAX_VALUE, maxZindex= Number.MIN_VALUE;
-        var uvOrder = planeGeometry.attributes.uv.array;
+    function setZIndex(image, quaternion) {
+        tempVector.set(image.position[0], image.position[1], image.position[2]);
+        tempVector.applyQuaternion(quaternion);
+        image.zIndex = tempVector.z;
+    }
+
+    function sortImages(images,count) {
+        DOK.turboSort(images,count);
+    }
+
+    function render(camera) {
         var i;
-        spriteRenderer.imageCount = 0;
-        var shift = spriteRenderer.shift;
-        var spriteIterator = spriteContainer.entries(), current;
-        while(!(current = spriteIterator.next()).done) {
-            var sprite = current.value[1];
-            var cut = core.getCut(sprite.url);
-            if(cut) {
-                if(!spriteRenderer.images[spriteRenderer.imageCount]) {
-                    spriteRenderer.images[spriteRenderer.imageCount] = {
-                        position:[0,0,0],
-                        size:[1,1,1],
-                        texture:0,
-                        light:1,
-                        uv:new Array(planeGeometry.attributes.uv.array.length),
-                        zIndex:0,
-                        level:0,
-                    };
-                }
-
-                var image = spriteRenderer.images[spriteRenderer.imageCount];
-                var offsetX = sprite.offset !== undefined ? sprite.offset[0]:0;
-                var offsetY = sprite.offset !== undefined ? sprite.offset[1]:0;
-                image.position[0] = Math.round(sprite.pos[0] + offsetX - shift.x);
-                image.position[1] = Math.round(sprite.pos[1] + offsetY - shift.y);
-                image.level = sprite.pos[2];
-                image.zIndex = -sprite.pos[1];
-                minZindex = Math.min(minZindex, image.zIndex);
-                maxZindex = Math.max(maxZindex, image.zIndex);
-
-                image.size = cut.size;
-                image.texture = cut.tex;
-                for(var u=0; u<image.uv.length; u+=2) {
-                    image.uv[u  ] = cut.cut[uvOrder[u  ]*2  ];
-                    image.uv[u+1] = cut.cut[uvOrder[u+1]*2+1];
-                }
-
-                image.light = sprite.light !== undefined ? sprite.light : 1;
-
-                spriteRenderer.imageCount++;
-            }
-        }
-
-        var diffZindex = maxZindex - minZindex;
-        for(i=0;i<spriteRenderer.imageCount;i++) {
-            spriteRenderer.images[i].zIndex += spriteRenderer.images[i].level * diffZindex;
-            maxZindex = Math.max(maxZindex, spriteRenderer.images[i].zIndex);
-            minZindex = Math.min(minZindex, spriteRenderer.images[i].zIndex);
-        }
-
-        for(i=0;i<spriteRenderer.imageCount;i++) {
-            spriteRenderer.images[i].position[2] = 100 * (spriteRenderer.images[i].zIndex-minZindex) / (maxZindex - minZindex+1);
-        }
-
-        for(i=spriteRenderer.imageCount;i<spriteRenderer.images.length;i++) {
-            spriteRenderer.images[i].zIndex =  Number.MAX_VALUE;
-        }
-
-        DOK.quickSort(spriteRenderer.images,getIndex);
-        return spriteRenderer.images;
-    }
-
-    function getIndex(a) {
-        return a.zIndex;
-    }
-
-    function compareIndex(a,b) {
-        return a.zIndex - b.zIndex;
-    }
-
-    function collectImagesPerspective(spriteContainer, spriteRenderer, camera) {
-        var planeGeometry = getPlaneGeometry();
-        var numSprites = spriteContainer.length;
-        var uvOrder = planeGeometry.attributes.uv.array;
-        var i;
-        spriteRenderer.imageCount = 0;
-        var shift = spriteRenderer.shift;
-        var spriteIterator = spriteContainer.entries(), current;
-
-        tempQuaternion.copy(camera.quaternion);
-        tempQuaternion.inverse();
-
-        while(!(current = spriteIterator.next()).done) {
-            var sprite = current.value[1];
-            var cut = core.getCut(sprite.url);
-            if(cut) {
-                if(!spriteRenderer.images[spriteRenderer.imageCount]) {
-                    spriteRenderer.images[spriteRenderer.imageCount] = {
-                        position:[0,0,0],
-                        rotation:[0,0,0],
-                        size:[1,1,1],
-                        texture:0,
-                        light:1,
-                        uv:new Array(planeGeometry.attributes.uv.array.length),
-                        zIndex:0,
-                    };
-                }
-
-                var image = spriteRenderer.images[spriteRenderer.imageCount];
-                image.quaternion = sprite.quaternion ? sprite.quaternion : defaultQuaternion;
-                var offsetX = sprite.offset !== undefined ? sprite.offset[0]:0;
-                var offsetY = sprite.offset !== undefined ? sprite.offset[1]:0;
-                image.position[0] = (sprite.pos[0] + offsetX - shift.x);
-                image.position[1] = (sprite.pos[1] + offsetY - shift.y);
-                image.position[2] = (sprite.pos[2]);
-
-                tempVector.set(image.position[0], image.position[1], image.position[2]);
-                tempVector.applyQuaternion(tempQuaternion);
-                image.zIndex = tempVector.z;
-
-                image.size = cut.size;
-                image.texture = cut.tex;
-                for(var u=0; u<image.uv.length; u+=2) {
-                    image.uv[u  ] = cut.cut[uvOrder[u  ]*2  ];
-                    image.uv[u+1] = cut.cut[uvOrder[u+1]*2+1];
-                }
-
-                image.light = sprite.light !== undefined ? sprite.light : 1;
-                spriteRenderer.imageCount++;
-            }
-        }
-
-        DOK.turboSort(spriteRenderer.images,getIndex,compareIndex);
-        return spriteRenderer.images;
-    }
-
-    function displaySprites(spriteContainer, camera) {
-        var i;
-        var images = camera.isOrthographic
-            ? collectImagesOrthographic(spriteContainer, this)
-            : collectImagesPerspective(spriteContainer, this, camera);
+        var images = this.images;
         var imageCount = this.imageCount;
         var planeGeometry = getPlaneGeometry();
         var pointCount = planeGeometry.attributes.position.count;
 
         var mesh = this.mesh;
         var geometry = mesh.geometry;
-        if(!geometry.attributes.position || geometry.attributes.position.count < imageCount*pointCount) {
+        if (!geometry.attributes.position || geometry.attributes.position.count < imageCount * pointCount) {
             geometry.attributes.position = new THREE.BufferAttribute(
-                new Float32Array(imageCount * pointCount*3), 3
+                new Float32Array(imageCount * pointCount * 3), 3
             );
             geometry.attributes.position.setDynamic(true);
         }
-        if(!geometry.attributes.spot || geometry.attributes.spot.count < imageCount*pointCount) {
+        if (!geometry.attributes.spot || geometry.attributes.spot.count < imageCount * pointCount) {
             geometry.attributes.spot = new THREE.BufferAttribute(
-                new Float32Array(imageCount * pointCount*3), 3
+                new Float32Array(imageCount * pointCount * 3), 3
             );
             geometry.attributes.spot.setDynamic(true);
         }
-        if(!geometry.attributes.quaternion || geometry.attributes.quaternion.count < imageCount*pointCount) {
+        if (!geometry.attributes.quaternion || geometry.attributes.quaternion.count < imageCount * pointCount) {
             geometry.attributes.quaternion = new THREE.BufferAttribute(
-                new Float32Array(imageCount * pointCount*4), 4
+                new Float32Array(imageCount * pointCount * 4), 4
             );
             geometry.attributes.spot.setDynamic(true);
         }
-        if(!geometry.attributes.uv || geometry.attributes.uv.count < imageCount*pointCount) {
+        if (!geometry.attributes.uv || geometry.attributes.uv.count < imageCount * pointCount) {
             geometry.attributes.uv = new THREE.BufferAttribute(
-                new Float32Array(imageCount * pointCount*2), 2
+                new Float32Array(imageCount * pointCount * 2), 2
             );
             geometry.attributes.uv.setDynamic(true);
         }
-        if(!geometry.attributes.tex || geometry.attributes.tex.count < imageCount*pointCount) {
+        if (!geometry.attributes.tex || geometry.attributes.tex.count < imageCount * pointCount) {
             geometry.attributes.tex = new THREE.BufferAttribute(
                 new Float32Array(imageCount * pointCount), 1
             );
             geometry.attributes.tex.setDynamic(true);
         }
-        if(!geometry.attributes.light || geometry.attributes.light.count < imageCount*pointCount) {
+        if (!geometry.attributes.light || geometry.attributes.light.count < imageCount * pointCount) {
             geometry.attributes.light = new THREE.BufferAttribute(
                 new Float32Array(imageCount * pointCount), 1
             );
             geometry.attributes.light.setDynamic(true);
         }
-        if(!geometry.index || geometry.index.count < imageCount*planeGeometry.index.array.length) {
+        if (!geometry.index || geometry.index.count < imageCount * planeGeometry.index.array.length) {
             var indices = planeGeometry.index.array;
             geometry.index = new THREE.BufferAttribute(new Uint16Array(imageCount * indices.length), 1);
-            for(i=0; i<geometry.index.array.length; i++) {
-                var index = Math.floor(i/indices.length);
-                geometry.index.array[i] = indices[i%indices.length] + index*pointCount;
+            for (i = 0; i < geometry.index.array.length; i++) {
+                var index = Math.floor(i / indices.length);
+                geometry.index.array[i] = indices[i % indices.length] + index * pointCount;
             }
             geometry.index.needsUpdate = true;
         }
 
-        for(i=0;i<imageCount;i++) {
-            var vertices = planeGeometry.attributes.position.array;
+        tempQuaternion.copy(camera.quaternion);
+        tempQuaternion.inverse();
+        for (i = 0; i < imageCount; i++) {
+            setZIndex(images[i], tempQuaternion);
+        }
+
+        sortImages(images, imageCount);
+    }
+
+    function updateGraphics() {
+        var camera = DOK.getCamera();
+        camera.quaternion.toArray(cameraQuaternionArray);
+        var defaultQuaternionArray = cameraQuaternionArray;
+        var vertices = planeGeometry.attributes.position.array;
+        var images = this.images;
+        var imageCount = this.imageCount;
+        var geometry = this.mesh.geometry;
+        var geo_quaternion = geometry.attributes.quaternion.array;
+        var geo_spot = geometry.attributes.spot.array;
+        var geo_pos = geometry.attributes.position.array;
+        var geo_tex = geometry.attributes.tex.array;
+        var geo_light = geometry.attributes.light.array;
+        var geo_uv = geometry.attributes.uv.array;
+
+        for(var i=0;i<imageCount;i++) {
             var image = images[i];
 
-            image.quaternion.toArray(geometry.attributes.quaternion.array, i*16);
-            image.quaternion.toArray(geometry.attributes.quaternion.array, i*16+4);
-            image.quaternion.toArray(geometry.attributes.quaternion.array, i*16+8);
-            image.quaternion.toArray(geometry.attributes.quaternion.array, i*16+12);
-            window.qq = defaultQuaternion;
+            var quaternionArray = image.quaternionArray ? image.quaternionArray : defaultQuaternionArray;
 
-            for(var v=0; v<vertices.length; v++) {
-                geometry.attributes.spot.array[i*12+v] = image.position[v%3];
-                geometry.attributes.position.array[i*12+v] = image.position[v%3] + vertices[v] * image.size[v%3];
-            }
+            geo_quaternion.set(quaternionArray, i*16);
+            geo_quaternion.set(quaternionArray, i*16+4);
+            geo_quaternion.set(quaternionArray, i*16+8);
+            geo_quaternion.set(quaternionArray, i*16+12);
 
-            for(var t=0; t<4; t++) {
-                geometry.attributes.tex.array[i*4 + t] = image.texture;
-            }
+            geo_spot.set(image.position, i*12);
+            geo_spot.set(image.position, i*12+3);
+            geo_spot.set(image.position, i*12+6);
+            geo_spot.set(image.position, i*12+9);
 
-            for(var l=0; l<4; l++) {
-                geometry.attributes.light.array[i*4 + l] = image.light;
-            }
+            geo_pos.set(image.vertices, i*12);
 
-            for(var u=0; u<image.uv.length; u++) {
-                geometry.attributes.uv.array[u + i*8] = image.uv[u];
-            }
+            geo_tex.fill(image.texture, i*4, i*4+4);
+            geo_light.fill(image.light, i*4, i*4+4);
+
+            geo_uv.set(image.uv, i*8);
         }
 
         geometry.setDrawRange(0, imageCount*vertices.length);

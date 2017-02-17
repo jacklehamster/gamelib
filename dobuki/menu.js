@@ -42,7 +42,7 @@
             d.style.height= "100%";
             d.style.color = "white";
             d.style.textAlign = "center";
-            d.style.fontFamily = '"bit", Courier';
+            d.style.fontFamily = 'Courier';
             d.style.fontSize = "28px";
             d.style.top = "0px";
             div.appendChild(d);
@@ -58,11 +58,11 @@
                 loop:function() {
                     if(getActiveMenu() != menu) {
                         menu.selection = -1;
-                        untrigger(this);
+                        return false;
                     }
                     arrow.style.display = menu.selection>=0?"":"none";
                     arrow.style.left = Math.floor(Math.sin(DOK.time/100)*6+10) + "px";
-                    arrow.style.top = (15 + menu.selection * 36) + "px";
+                    arrow.style.top = (10 + menu.selection * 36) + "px";
                 }
             };
             menu.arrowLooper = arrowLooper;
@@ -78,7 +78,7 @@
         }
         menu.d.appendChild(menu.arrow);
         div.style.width = (17*maxLength + 74)+"px";
-        div.style.height = menu.list.length*40 + "px";
+        div.style.height = menu.list.length*36 + "px";
         //console.log(maxLength,menu.list.length,div);
         document.body.appendChild(div);
         var position = menu.position;
@@ -96,6 +96,7 @@
     
     function hideMenu(menu) {
         getMenu(menu).style.display = "none";
+        menu.shown = false;
     }
     
     function triggerMenu(menu) {
@@ -105,7 +106,7 @@
     }
     
     function getActiveMenu() {
-        return activeMenu;
+        return activeMenu && activeMenu.shown ? activeMenu : null;
     }
     
     function refreshMenus() {
@@ -124,6 +125,7 @@
     core.showMenu = showMenu;
     core.hideMenu = hideMenu;
     core.getActiveMenu = getActiveMenu;
+    core.refreshMenus = refreshMenus;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**
@@ -155,8 +157,23 @@
                 break;
             }
             var activeMenu = DOK.getActiveMenu();
-            if(dy) {
-                activeMenu.selection = (activeMenu.selection-dy+activeMenu.list.length) % activeMenu.list.length;
+            if(activeMenu) {
+                if(dy) {
+                    activeMenu.selection = (activeMenu.selection-dy+activeMenu.list.length) % activeMenu.list.length;
+                    if(activeMenu.select) {
+                        activeMenu.select(activeMenu.selection);
+                    }
+                }
+                if(act) {
+                    if(activeMenu.action) {
+                        activeMenu.action(activeMenu.selection);
+                    }
+                }
+                if(cancel) {
+                    if(activeMenu.cancel) {
+                        activeMenu.cancel();
+                    }
+                }
             }
         }
     );
