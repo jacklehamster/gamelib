@@ -6,13 +6,18 @@
 
     var point = { x: 0, y: 0, active:false };
     var downTime = 0;
+    var camRotation = new THREE.Euler();
     var centerizer = {
         loop: function() {
             var camera = core.getCamera();
-            camera.rotation.z *= .8;
-            if (Math.abs(camera.rotation.z) < .01) {
-                camera.rotation.z = 0;
-                core.untrigger(this);
+            camRotation.setFromQuaternion(camera.quaternion);
+            camRotation.z *= .8;
+            if (Math.abs(camRotation.z) < .01) {
+                camRotation.z = 0;
+                camera.quaternion.setFromEuler(camRotation);
+                return false;
+            } else {
+                camera.quaternion.setFromEuler(camRotation);
             }
         }
     };
@@ -50,7 +55,7 @@
         var menus = {
             camera: {
                 selection: 0,
-                id: "startMenu",
+                id: "cameraMenu",
                 position: [30,30],
                 list: [
                     "CAMERA PERSPECTIVE",
@@ -79,6 +84,7 @@
             point.x = e.pageX;
             point.y = e.pageY;
             activateBallControl();
+            core.hideMenu(menus.camera);
             e.preventDefault();
         });
 
@@ -96,11 +102,11 @@
             var dx = e.pageX - point.x;
             var dy = e.pageY - point.y;
             if(DOK.anyKeyPressed(16)) {
-                camera.rotateZ(-dx/100);
+                camera.rotateZ(dx/100);
             } else {
-                camera.rotateY(-dx/100);
+                camera.rotateY(dx/100);
             }
-            camera.rotateX(-dy/100);
+            camera.rotateX(dy/100);
             point.x = e.pageX;
             point.y = e.pageY;
         } else {
@@ -114,11 +120,11 @@
             var camera = core.getCamera();
             var dx = e.pageX - point.x;
             var dy = e.pageY - point.y;
-            camera.translateX(dx*10);
+            camera.translateX(-dx*10);
             if(DOK.anyKeyPressed(16)) {
-                camera.translateZ(dy*10);
+                camera.translateZ(-dy*10);
             } else {
-                camera.translateY(-dy*10);
+                camera.translateY(dy*10);
             }
             point.x = e.pageX;
             point.y = e.pageY;
@@ -150,7 +156,7 @@
             document.removeEventListener("mousemove", ballMouseMove);
             document.removeEventListener("mouseup", mouseUpBall);
             point.active = false;
-            if(core.time - downTime < 100) {
+            if(core.time - downTime < 150) {
                 core.trigger(centerizer);
             }
             downTime = 0;

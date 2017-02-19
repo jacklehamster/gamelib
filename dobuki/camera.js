@@ -5,8 +5,8 @@
 }(window, (function (core, global) { 'use strict';
     var camera2d = new THREE.OrthographicCamera(-innerWidth/2, innerWidth/2, innerHeight/2, -innerHeight/2, 0.1, THREE.Infinity );
     var camera3d = new THREE.PerspectiveCamera( 75, innerWidth / innerHeight, 0.1, THREE.Infinity );
-    var camera = camera3d;
-    camera.position.set(0,0,400);
+    var camera;
+    var dirty = true;
 
     /**
      *  HEADER
@@ -23,15 +23,18 @@
         return camera;
     }
 
+    function nop() {
+    }
+
     function setCamera3d(value) {
-        console.log("here",value);
         if(value && camera!==camera3d) {
             camera = camera3d;
             copyCamera(camera2d,camera);
+            camera.position.set(0,0,400);
         } else if(!value && camera===camera3d) {
-            console.log("here",value);
             camera = camera2d;
             copyCamera(camera3d,camera);
+            camera.position.set(0,0,400);
         }
     }
 
@@ -74,5 +77,5 @@
         camera.updateProjectionMatrix();
     });
 
-
+    setCamera3d(true);
 })));

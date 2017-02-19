@@ -53,16 +53,31 @@
             arrow.style.left = "10px";
             arrow.style.top = "15px";
             arrow.style.display = "none";
+            var disp = null;
+            var pos = {x:0,y:0};
             var arrowLooper = {
-                id:"arrow",
+                id:menu.id + ".arrow",
                 loop:function() {
-                    if(getActiveMenu() != menu) {
+                    if(getActiveMenu() !== menu) {
+                        arrow.style.display = "none";
                         menu.selection = -1;
                         return false;
                     }
-                    arrow.style.display = menu.selection>=0?"":"none";
-                    arrow.style.left = Math.floor(Math.sin(DOK.time/100)*6+10) + "px";
-                    arrow.style.top = (10 + menu.selection * 36) + "px";
+                    var newDisp = menu.selection>=0?"":"none";
+                    if(newDisp != disp) {
+                        disp = newDisp;
+                        arrow.style.display = disp;
+                    }
+                    var left = Math.round(Math.sin(core.time/100)*6+10);
+                    if(left!=pos.x) {
+                        pos.x = left;
+                        arrow.style.left = pos.x + "px";
+                    }
+                    var top = Math.round(10 + menu.selection * 36);
+                    if(top!=pos.y) {
+                        pos.y = top;
+                        arrow.style.top = pos.y + "px";
+                    }
                 }
             };
             menu.arrowLooper = arrowLooper;
@@ -88,6 +103,9 @@
     }
     
     function showMenu(menu, trigger) {
+        if(getActiveMenu() && trigger) {
+            menuStack.push(getActiveMenu());
+        }
         getMenu(menu).style.display = "";
         if(trigger) {
             triggerMenu(menu);
@@ -97,12 +115,25 @@
     function hideMenu(menu) {
         getMenu(menu).style.display = "none";
         menu.shown = false;
+        if(menuStack.length) {
+            showMenu(menuStack.pop(), true);
+        }
     }
+
+    function toggleMenu(menu) {
+        if(menu.shown) {
+            hideMenu(menu);
+        } else {
+            showMenu(menu);
+        }
+    }
+
+    var menuStack = [];
     
     function triggerMenu(menu) {
-        activeMenu= menu;
-        menu.shown = DOK.time;
-        DOK.trigger(menu.arrowLooper);        
+        activeMenu = menu;
+        menu.shown = core.time;
+        core.trigger(menu.arrowLooper);
     }
     
     function getActiveMenu() {
@@ -124,6 +155,7 @@
      */
     core.showMenu = showMenu;
     core.hideMenu = hideMenu;
+    core.toggleMenu = toggleMenu;
     core.getActiveMenu = getActiveMenu;
     core.refreshMenus = refreshMenus;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
@@ -156,7 +188,7 @@
                 dx++;
                 break;
             }
-            var activeMenu = DOK.getActiveMenu();
+            var activeMenu = core.getActiveMenu();
             if(activeMenu) {
                 if(dy) {
                     activeMenu.selection = (activeMenu.selection-dy+activeMenu.list.length) % activeMenu.list.length;

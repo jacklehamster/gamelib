@@ -55,7 +55,7 @@
    }
     
    function beginLoop() {
-        loop();
+        loop(0);
    }
     
    function loopTime() {
