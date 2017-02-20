@@ -53,7 +53,9 @@
     function triggerLoop() {
         for(var i in triggers) {
             if(triggers[i].loop) {
-                triggers[i].loop();
+                if(triggers[i].loop() === false) {
+                    untrigger(triggers[i]);
+                }
             }
         }
     }
@@ -74,6 +76,5 @@
     /**
      *   PROCESSES
      */
-    DOK.addLoop(triggerLoop);
-     
+
  })));

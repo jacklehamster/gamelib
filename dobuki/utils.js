@@ -49,50 +49,6 @@
             it.index = 0;
             return it;
         }
-
-        function quickSort(arr, left, right, compare){
-            var len = arr.length,
-                pivot,
-                partitionIndex;
-
-
-            if(left < right){
-                pivot = right;
-                partitionIndex = partition(arr, pivot, left, right, compare);
-
-                //sort left and right
-                quickSort(arr, left, partitionIndex - 1, compare);
-                quickSort(arr, partitionIndex + 1, right, compare);
-            }
-            return arr;
-        }
-
-        function partition(arr, pivot, left, right, compare){
-            var pivotValue = arr[pivot],
-                partitionIndex = left;
-
-            for(var i = left; i < right; i++){
-                if(compare(arr[i] , pivotValue)<0){
-                    swap(arr, i, partitionIndex);
-                    partitionIndex++;
-                }
-            }
-            swap(arr, right, partitionIndex);
-            return partitionIndex;
-        }
-
-
-
-        function swap(arr, i, j){
-            var temp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = temp;
-        }
-
-        Array.prototype.sort = function(compare) {
-            quickSort(this, 0, this.length-1, compare);
-            return this;
-        }
     }
 
     function loadAsyncHelper(src, result, index, callback, binary, method, data) {
