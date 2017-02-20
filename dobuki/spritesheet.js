@@ -6,8 +6,8 @@
 
     var canvases = {};
     var cuts = {};
-    var mapping = {};
-    var mapcount = 1;
+    var cutArray = [];
+    var cutCount = 0;
 
     var textures = [null];
     var slots = {};
@@ -83,15 +83,23 @@
         } else {
             var url = urlpipe[0];
             canvas = getCanvas(url);
-            var image = core.loadImage(url,
-                function() {
-                    canvas.width = image.naturalWidth;
-                    canvas.height = image.naturalHeight;
-                    initCanvas(canvas);
-                    canvas.getContext("2d").drawImage(image,0,0);
-                    canvas.dispatchEvent(new CustomEvent("update"));
-                }
-            );
+
+            //  check for width x height
+            var size = url.split("x");
+            if(size.length==2 && !isNaN(parseInt(size[0])) && !isNaN(parseInt(size[1]))) {
+                canvas.width = parseInt(size[0]);
+                canvas.height = parseInt(size[1]);
+            } else {
+                var image = core.loadImage(url,
+                    function() {
+                        canvas.width = image.naturalWidth;
+                        canvas.height = image.naturalHeight;
+                        initCanvas(canvas);
+                        canvas.getContext("2d").drawImage(image,0,0);
+                        canvas.dispatchEvent(new CustomEvent("update"));
+                    }
+                );
+            }
             return canvas;
         }
     }
@@ -142,19 +150,33 @@
         }
     }
 
-    function getCut(url) {
-        if(cuts[url]) {
+    function getCut(index) {
+        var cut = cutArray[index];
+        if(cut && cut.ready) {
+            return cut;
+        }
+        return cut ? getCutByURL(cut.url) : null;
+    }
+
+    function getCutByURL(url) {
+        if(cuts[url] && cuts[url].ready) {
             return cuts[url];
         }
-        if(typeof(url) !== "string") {
-            url = mapping[url];
-        }
-        var canvas = fetchCanvas(url.split("|"));
+        var canvas = fetchCanvas(url.split("|"), url);
         var slot = core.getSlot(canvas);
-        if(!mapping[url]) {
-            mapping[url] = mapcount;
-            mapping[mapcount] = url;
-            mapcount++;
+
+        var cut = cuts[url];
+        if(!cut) {
+            cut = {
+                index: cutCount++,
+                url: url,
+                tex: 0,
+                vertices: null,
+                uv: null,
+                ready: false,
+            };
+            cuts[url] = cut;
+            cutArray[cut.index] = cut;
         }
 
         if(slot) {
@@ -172,14 +194,10 @@
             var size = [ canvas.width, canvas.height, 1 ];
             var cutcut = [ uvX, 1-uvY-uvH, uvX+uvW, 1-uvY ];
 
-            var cut = {
-                index: mapping[url],
-                tex:slot.tex,
-//                cut:[ uvX, 1-uvY-uvH, uvX+uvW, 1-uvY ],
-//                size: [ canvas.width, canvas.height, 1 ],
-                vertices: new Float32Array(vertices.length),
-                uv: new Float32Array(uvOrder.length),
-            };
+            cut.tex = slot.tex;
+            cut.vertices = new Float32Array(vertices.length);
+            cut.uv = new Float32Array(uvOrder.length);
+            cut.ready = true;
             for(var v=0; v<vertices.length; v++) {
                 cut.vertices[v] = vertices[v] * size[v%3];
             }
@@ -187,33 +205,41 @@
                 cut.uv[u] = cutcut[uvOrder[u]*2 + u%2];
             }
 
-            cuts[url] = cuts[cut.index] = cut;
             return cut;
         } else {
-            return null;
+            return cut;
         }
     }
 
-    function preLoad(images) {
+    function preLoad(images,root) {
+        if(root===undefined) {
+            root = core.spritesheet;
+        }
         if(typeof(images)==="string") {
-            getCut(images);
-            return mapping[images];
+            var cut = getCutByURL(images);
+            if(cut) {
+                return cut.index;
+            }
         } else {
             for(var prop in images) {
                 if(images.hasOwnProperty(prop)) {
-                    var index = core.preLoad(images[prop]);
-                    if(index) {
-                        images[prop] = index;
+                    if(!root[prop]) {
+                        root[prop] = [];
+                    }
+                    var index = core.preLoad(images[prop],root[prop]);
+                    if (index!==null) {
+                        root[prop] = index;
                     }
                 }
             }
+            return root;
         }
-        return null;
     }
 
     function updateSpritesheetEvent(event) {
         var canvas = event.currentTarget;
-        var slot = slots[canvas.getAttribute("url")];
+        var url = canvas.getAttribute("url");
+        var slot = slots[url];
         var spritesheet = getCanvas("tex-"+slot.tex);
         spritesheet.getContext("2d").drawImage(canvas,slot.x,slot.y);
         spritesheet.dispatchEvent(new CustomEvent("update"));
@@ -242,6 +268,7 @@
     core.getCut = getCut;
     core.getTextures = getTextures;
     core.preLoad = preLoad;
+    core.spritesheet = {};
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**

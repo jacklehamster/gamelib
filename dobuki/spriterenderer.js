@@ -54,9 +54,9 @@
         this.imageCount = 0;
     }
 
-    function addSpritePerspective(pos, offset, url, light, faceCamera) {
+    function addSpritePerspective(pos, offset, img, light, faceCamera) {
         var image = null;
-        var cut = core.getCut(url);
+        var cut = core.getCut(img);
         if(cut) {
             if(!this.images[this.imageCount]) {
                 var index = this.imageCount;
@@ -88,9 +88,9 @@
             var pY = (pos[1] + offset[1] - this.shift.y);
             var pZ = (pos[2]);
             if(pX !== image.position[0] || pY !== image.position[1] || pZ !== image.position[2]) {
-                image.position[0] = (pos[0] + offset[0] - this.shift.x);
-                image.position[1] = (pos[1] + offset[1] - this.shift.y);
-                image.position[2] = (pos[2]);
+                image.position[0] = pX;
+                image.position[1] = pY;
+                image.position[2] = pZ;
                 image.positionDirty = true;
             }
 
@@ -155,9 +155,11 @@
     }
 
     function setZIndex(image, quaternion) {
-        tempVector.set(image.position[0], image.position[1], image.position[2]);
-        tempVector.applyQuaternion(quaternion);
-        image.zIndex = tempVector.z;
+        if(cameraChanged || image.positionDirty) {
+            tempVector.set(image.position[0], image.position[1], image.position[2]);
+            tempVector.applyQuaternion(quaternion);
+            image.zIndex = tempVector.z;
+        }
     }
 
     function sortImages(images,count) {
@@ -335,7 +337,9 @@
 
         }
 
-        geometry.setDrawRange(0, imageCount*vertices.length);
+        if(geometry.drawRange.start !== 0 || geometry.drawRange.count != imageCount*vertices.length) {
+            geometry.setDrawRange(0, imageCount*vertices.length);
+        }
 
         if(lightChanged) {
             geometry.attributes.light.needsUpdate = true;

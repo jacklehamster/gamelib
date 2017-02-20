@@ -6,7 +6,7 @@
 
     var bucketsStack = [];
     var countsStack = [];
-    var SIZE = 100;
+    var SIZE = 500;
     /**
      *  HEADER
      */
@@ -28,19 +28,31 @@
     function getMinMax(array, offset, length) {
         var minNum = Number.MAX_VALUE;
         var maxNum = -Number.MAX_VALUE;
+        var previousNum = -Number.MAX_VALUE;
+        var inOrder = true;
         for(var i=0; i<length; i++) {
-//            var index = indexFunction(array[offset+i]);
             var index = array[offset+i].zIndex;
-            minNum = Math.min(minNum, index);
-            maxNum = Math.max(maxNum, index);
+            if(previousNum > index) {
+                inOrder = false;
+                if(index < minNum) {
+                    minNum = index;
+                }
+            } else {
+                if(index > maxNum) {
+                    maxNum = index;
+                }
+            }
+            previousNum = index;
         }
         getMinMax.result.min = minNum;
         getMinMax.result.max = maxNum;
+        getMinMax.result.inOrder = inOrder;
         return getMinMax.result;
     }
     getMinMax.result = {
         min: 0,
         max: 0,
+        inOrder: false,
     };
 
     function identity(a) {
@@ -59,7 +71,7 @@
     }
 
     function compareIndex(a,b) {
-        a.zIndex - b.zIndex;
+        return a.zIndex - b.zIndex;
 //        return indexFunction(a)-indexFunction(b);
     }
 
@@ -72,6 +84,9 @@
         var buckets = bucketsStack[depth];
         var counts = countsStack[depth];
         var arrayInfo = getMinMax(array, offset, length);
+        if(arrayInfo.inOrder) {
+            return;
+        }
         var min = arrayInfo.min;
         var max = arrayInfo.max;
         var range = max-min;

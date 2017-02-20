@@ -3,8 +3,8 @@
         typeof define === 'function' && define.amd ? define(['exports'], factory) :
             (factory((global.DOK = global.DOK || {}), global));
 }(window, (function (core, global) { 'use strict';
-    var camera2d = new THREE.OrthographicCamera(-innerWidth/2, innerWidth/2, innerHeight/2, -innerHeight/2, 0.1, THREE.Infinity );
-    var camera3d = new THREE.PerspectiveCamera( 75, innerWidth / innerHeight, 0.1, THREE.Infinity );
+    var camera2d = new THREE.OrthographicCamera(-innerWidth/2, innerWidth/2, innerHeight/2, -innerHeight/2, 0.1, 1000000 );
+    var camera3d = new THREE.PerspectiveCamera( 75, innerWidth / innerHeight, 0.1, 1000000 );
     var camera;
     var dirty = true;
 
@@ -45,7 +45,7 @@
     function copyCamera(from, to) {
 //        to.copy(from);
         to.position.copy(from.position);
-        to.rotation.copy(from.rotation);
+        to.quaternion.copy(from.quaternion);
     }
 
     function destroyEverything() {
