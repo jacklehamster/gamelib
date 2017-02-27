@@ -40,6 +40,7 @@
     function createGif(src) {
         var renderTime = 0;
         var currentFrame = 0;
+        var maxFrameCompleted = 0;
 
         var gifInfo = {
             framesProcessed: 0,
@@ -78,6 +79,7 @@
                         if(self.callbacks[frameInfo.frame]) {
                             self.callbacks[frameInfo.frame]();
                         }
+                        maxFrameCompleted = frameInfo.frame;
                         self.frameInfos[frameInfo.frame].ready = true;
                         processNext();
                     });
@@ -121,7 +123,7 @@
                     var totalAnimationTime = this.frameInfos[this.frameInfos.length-1].cycleTime;
                     renderTime = Math.floor(core.time / totalAnimationTime) * totalAnimationTime + this.frameInfos[currentFrame].cycleTime;
                 }
-                return currentFrame;
+                return Math.min(currentFrame,maxFrameCompleted);
             },
             eof: function(block) {
                 this.block = block;
@@ -139,7 +141,7 @@
     function initializeGifWorker() {
         gifWorker = new Worker(currentScript.path + "workers/gifworker.js");
         gifWorker.onmessage = function(e) {
-           gifWorkerCallbacks[e.data.id] (e.data.response.cData, e.data.response.frameInfo);
+           gifWorkerCallbacks[e.data.id] (e.data.cData, e.data.frameInfo);
            delete gifWorkerCallbacks[e.data.id];
         }
     }

@@ -81,7 +81,7 @@
     }
 
     function turboSortHelper(array, offset, length, depth) {
-        if(length < 500) {
+        if(length < 1000) {
             quickSortHelper(array, offset, offset+length-1, compareIndex);
             return;
         }
