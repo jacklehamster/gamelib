@@ -2,12 +2,13 @@
  	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
  	typeof define === 'function' && define.amd ? define(['exports'], factory) :
  	(factory((global.DOK = global.DOK || {})));
- }(window, (function (core) { 'use strict';
+}(window, (function (core) { 'use strict';
 
     var canvases = {};
     var cuts = {};
     var cutArray = [];
     var cutCount = 0;
+    window.ca = cuts;
 
     var textures = [null];
     var slots = {};
@@ -28,8 +29,8 @@
     /**
      *  FUNCTION DEFINITIONS
      */
-    function getCanvas(url) {
-        if(!canvases[url]) {
+    function getCanvas(url, canCreate) {
+        if(!canvases[url] && canCreate) {
             var canvas = canvases[url] = document.createElement('canvas');
             canvas.setAttribute("url", url);
             if(url.indexOf("tex-")===0) {
@@ -43,12 +44,12 @@
                 canvas.setAttribute("texture", index.toString());
 
 //                document.body.appendChild(canvas);
-                canvas.style.position = "absolute";
-                canvas.style.left = 0;
-                canvas.style.top = 0;
             } else {
                 canvas.width = canvas.height = 1;
             }
+            canvas.style.position = "absolute";
+            canvas.style.left = 0;
+            canvas.style.top = 0;
             initCanvas(canvas);
         }
         return canvases[url];
@@ -61,18 +62,17 @@
         context.msImageSmoothingEnabled = false;
     }
 
-    function fetchCanvas(urlpipe) {
-        var canvas;
-        if(canvases[urlpipe.join("|")]) {
-            canvas = getCanvas(urlpipe.join("|"));
+    function fetchCanvas(urlpipe, frame) {
+        var canvas = getCanvas(frame+":"+urlpipe.join("|"));
+        if (canvas) {
             return canvas;
         }
 
         if(urlpipe.length > 1) {
-            canvas = getCanvas(urlpipe.join("|"));
+            canvas = getCanvas(frame+":"+urlpipe.join("|"), true);
             var subpipe = urlpipe.slice(0,urlpipe.length-1);
             var processString = urlpipe[urlpipe.length-1];
-            var subCanvas = fetchCanvas(subpipe);
+            var subCanvas = fetchCanvas(subpipe, frame);
             processCanvas(subCanvas, processString,canvas);
             subCanvas.addEventListener("update", function(event) {
                 var subCanvas = event.currentTarget;
@@ -82,26 +82,41 @@
             return canvas;
         } else {
             var url = urlpipe[0];
-            canvas = getCanvas(url);
+            canvas = getCanvas(frame+":"+url, true);
 
             //  check for width x height
             var size = url.split("x");
-            if(size.length==2 && !isNaN(parseInt(size[0])) && !isNaN(parseInt(size[1]))) {
+            if(size.length===2 && !isNaN(parseInt(size[0])) && !isNaN(parseInt(size[1]))) {
                 canvas.width = parseInt(size[0]);
                 canvas.height = parseInt(size[1]);
+            } else if(core.isGif(url)) {
+                var gif = core.getGif(url);
+                canvas.setAttribute("animated", true);
+                if(gif.frameInfos[frame] && gif.frameInfos[frame].ready) {
+                    drawGif(gif, frame, canvas);
+                } else {
+                    gif.callbacks[frame] = drawGif.bind(null, gif, frame, canvas);
+                }
             } else {
-                var image = core.loadImage(url,
-                    function() {
-                        canvas.width = image.naturalWidth;
-                        canvas.height = image.naturalHeight;
-                        initCanvas(canvas);
-                        canvas.getContext("2d").drawImage(image,0,0);
-                        canvas.dispatchEvent(new CustomEvent("update"));
-                    }
-                );
+                var image = core.loadImage(url, function() {
+                    canvas.width = image.naturalWidth;
+                    canvas.height = image.naturalHeight;
+                    initCanvas(canvas);
+                    canvas.getContext("2d").drawImage(image,0,0);
+//                    document.body.appendChild(canvas);
+                    canvas.dispatchEvent(new CustomEvent("update"));
+                });
             }
             return canvas;
         }
+    }
+
+    function drawGif(gif, frame, canvas) {
+        canvas.width = gif.header.width;
+        canvas.height = gif.header.height;
+        initCanvas(canvas);
+        canvas.getContext("2d").drawImage(gif.canvases[frame],0,0);
+        canvas.dispatchEvent(new CustomEvent("update"));
     }
 
     function processCanvas(canvas, processString, outputCanvas) {
@@ -152,17 +167,23 @@
 
     function getCut(index) {
         var cut = cutArray[index];
-        if(cut && cut.ready) {
-            return cut;
+        var frame = cut && cut.animated ? DOK.getGif(cut.url).getFrame() : 0;
+        if(cut && cut.cut[frame] && cut.cut[frame].ready) {
+            return cut.cut[frame];
         }
-        return cut ? getCutByURL(cut.url) : null;
+        if(cut.url) {
+            cut = getCutByURL(cut.url, frame);
+            return cut.cut[frame];
+        }
+        return null;
     }
 
-    function getCutByURL(url) {
-        if(cuts[url] && cuts[url].ready) {
+    function getCutByURL(url, frame) {
+        if(cuts[url] && cuts[url].cut[frame] && cuts[url].cut[frame].ready) {
             return cuts[url];
         }
-        var canvas = fetchCanvas(url.split("|"), url);
+
+        var canvas = fetchCanvas(url.split("|"), frame);
         var slot = core.getSlot(canvas);
 
         var cut = cuts[url];
@@ -170,13 +191,16 @@
             cut = {
                 index: cutCount++,
                 url: url,
-                tex: 0,
-                vertices: null,
-                uv: null,
-                ready: false,
+                cut: [],
+                animated: false,
             };
             cuts[url] = cut;
             cutArray[cut.index] = cut;
+        }
+        if(!cut.cut[frame]) {
+            cut.cut[frame] = {
+                tex: 0, uv: null, ready: false,
+            };
         }
 
         if(slot) {
@@ -188,23 +212,18 @@
             var uvY = slot.y / SPRITE_SHEET_SIZE;
             var uvW = canvas.width / SPRITE_SHEET_SIZE;
             var uvH = canvas.height / SPRITE_SHEET_SIZE;
-            var vertices = planeGeometry.attributes.position.array;
             var uvOrder = planeGeometry.attributes.uv.array;
 
-            var size = [ canvas.width, canvas.height, 1 ];
             var cutcut = [ uvX, 1-uvY-uvH, uvX+uvW, 1-uvY ];
 
-            cut.tex = slot.tex;
-            cut.vertices = new Float32Array(vertices.length);
-            cut.uv = new Float32Array(uvOrder.length);
-            cut.ready = true;
-            for(var v=0; v<vertices.length; v++) {
-                cut.vertices[v] = vertices[v] * size[v%3];
-            }
+            cut.animated = canvas.getAttribute("animated")==="true";
+            cut.cut[frame].tex = slot.tex;
+            cut.cut[frame].uv = new Float32Array(uvOrder.length);
             for(var u=0; u<uvOrder.length; u++) {
-                cut.uv[u] = cutcut[uvOrder[u]*2 + u%2];
+                cut.cut[frame].uv[u] = cutcut[uvOrder[u]*2 + u%2];
             }
-
+            cut.cut[frame].ready = true;
+//            console.log(canvas);
             return cut;
         } else {
             return cut;
@@ -216,7 +235,7 @@
             root = core.spritesheet;
         }
         if(typeof(images)==="string") {
-            var cut = getCutByURL(images);
+            var cut = getCutByURL(images, 0);
             if(cut) {
                 return cut.index;
             }
@@ -240,7 +259,7 @@
         var canvas = event.currentTarget;
         var url = canvas.getAttribute("url");
         var slot = slots[url];
-        var spritesheet = getCanvas("tex-"+slot.tex);
+        var spritesheet = getCanvas("tex-"+slot.tex, true);
         spritesheet.getContext("2d").drawImage(canvas,slot.x,slot.y);
         spritesheet.dispatchEvent(new CustomEvent("update"));
     }
@@ -268,6 +287,7 @@
     core.getCut = getCut;
     core.getTextures = getTextures;
     core.preLoad = preLoad;
+    core.fetchCanvas = fetchCanvas;
     core.spritesheet = {};
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 

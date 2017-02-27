@@ -2,14 +2,12 @@
  	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
  	typeof define === 'function' && define.amd ? define(['exports'], factory) :
  	(factory((global.DOK = global.DOK || {})));
- }(window, (function (core) { 'use strict';
+}(window, (function (core) { 'use strict';
 
     var planeGeometry = new THREE.PlaneBufferGeometry(1, 1);
     var identityQuaternionArray = (new THREE.Quaternion()).toArray(new Float32Array(4));
-    var camDirty = false;
     var spriteRenderers = [];
     var tempVector = new THREE.Vector3(), tempQuaternion = new THREE.Quaternion(), cameraQuaternionArray = new Float32Array(4);
-    var uvOrder = planeGeometry.attributes.uv.array;
     var camera, cameraChanged;
 
     /**
@@ -46,26 +44,23 @@
      *  FUNCTION DEFINITIONS
      */
 
-    function getPlaneGeometry() {
-        return planeGeometry;
-    }
-
     function clear() {
         this.imageCount = 0;
     }
 
-    function addSpritePerspective(pos, offset, img, light, faceCamera) {
+    function addSpritePerspective(pos, offset, size, img, light, faceCamera) {
         var image = null;
         var cut = core.getCut(img);
-        if(cut) {
+        if(cut && cut.ready) {
             if(!this.images[this.imageCount]) {
                 var index = this.imageCount;
-                this.images[this.imageCount] = image = {
+                this.images[this.imageCount] = {
                     index: index,
                     position:new Float32Array(3),
                     tex:0,
+                    size: [0,0,0],
                     uv: null,
-                    vertices: null,
+                    vertices: new Float32Array(planeGeometry.attributes.position.array.length),
                     light:1,
                     zIndex:0,
                     quaternionArray: null,
@@ -94,8 +89,12 @@
                 image.positionDirty = true;
             }
 
-            if(image.vertices !== cut.vertices) {
-                image.vertices = cut.vertices;
+            if(size[0] !== image.size[0] || size[1] !== image.size[1] || size[2] !== image.size[2]) {
+                image.size[0] = size[0]; image.size[1] = size[1]; image.size[2] = size[2];
+                var vertices = planeGeometry.attributes.position.array;
+                for(var v=0; v<vertices.length; v++) {
+                    image.vertices[v] = vertices[v] * size[v%3];
+                }
                 image.verticesDirty = true;
             }
 
@@ -109,10 +108,6 @@
                 image.texDirty = true;
             }
 
-            if(image.cut !== cut) {
-                image.cut = cut;
-                image.cutDirty = true;
-            }
             if(image.light !== light) {
                 image.light = light;
                 image.lightDirty = true;
@@ -170,7 +165,6 @@
         var i;
         var images = this.images;
         var imageCount = this.imageCount;
-        var planeGeometry = getPlaneGeometry();
         var pointCount = planeGeometry.attributes.position.count;
         var previousAttribute;
 

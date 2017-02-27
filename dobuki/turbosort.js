@@ -62,7 +62,12 @@
  //   var indexFunction = null;
     function turboSort(array, size) {
    //     indexFunction = getIndex ? getIndex : identity;
-        turboSortHelper(array, 0, size ? size : array.length, 0);
+        if(array) {
+            size = size ? Math.min(size,array.length) : array.length;
+            if(size > 1) {
+                turboSortHelper(array, 0, size ? size : array.length, 0);
+            }
+        }
     }
 
     function quickSort(array, size) {
@@ -76,7 +81,7 @@
     }
 
     function turboSortHelper(array, offset, length, depth) {
-        if(length < 1000) {
+        if(length < 500) {
             quickSortHelper(array, offset, offset+length-1, compareIndex);
             return;
         }
