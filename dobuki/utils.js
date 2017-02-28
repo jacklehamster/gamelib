@@ -94,6 +94,13 @@
         }
     }
 
+    function addLinkToHeadTag(rel, href) {
+        var link = document.createElement("link");
+        link.setAttribute("rel", rel);
+        link.href = href;
+        document.head.appendChild(link);
+    }
+
     /**
      *  PUBLIC DECLARATIONS
      */
@@ -111,10 +118,12 @@
         try {
             var object = JSON.parse(str);
             document.title = core.title = object.window.title;
-            var link = document.createElement("link");
-            link.setAttribute("rel", "shortcut icon");
-            link.href = object.window.icon;
-            document.head.appendChild(link);
+            addLinkToHeadTag("shortcut icon", object.window.icon);
+            addLinkToHeadTag("apple-touch-icon",
+                object.window['apple-touch-icon'] || object.window.icon
+            );
+            addLinkToHeadTag()
+
         } catch(e) {
         }
     });
