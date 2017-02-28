@@ -16,7 +16,7 @@
    function fixPath() {
        var regex = /\/$|index\.html$|next\.html$/g;
        if (!regex.exec(location.pathname)) {
-//           window.history.pushState(null,"", location.pathname+"/"+location.search+location.hash);
+           window.history.pushState(null,"", location.pathname+"/"+location.search+location.hash);
        }
    }
 

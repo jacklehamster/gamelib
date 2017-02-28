@@ -104,12 +104,17 @@
      */
     core.requireScripts(['setup.js']);
     core.logScript();
+    core.title = "";
     definePrototypes();
 
     loadAsync("package.json", function(str) {
         try {
             var object = JSON.parse(str);
-            document.title = object.window.title;
+            document.title = core.title = object.window.title;
+            var link = document.createElement("link");
+            link.setAttribute("rel", "shortcut icon");
+            link.href = object.window.icon;
+            document.head.appendChild(link);
         } catch(e) {
         }
     });
