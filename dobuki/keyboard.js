@@ -32,19 +32,21 @@
     }
     
     function handleKey(e) {
-        if(e.type === "keydown") {
-            if(!keyboard[e.keyCode]) {
-                keyboard[e.keyCode] = core.time;
-                document.dispatchEvent(new CustomEvent("firstPress",{
-                    detail: {
-                        keyCode: e.keyCode
-                    }
-                }))
+        if(e.target===document.body) {
+            if(e.type === "keydown") {
+                if(!keyboard[e.keyCode]) {
+                    keyboard[e.keyCode] = core.time;
+                    document.dispatchEvent(new CustomEvent("firstPress",{
+                        detail: {
+                            keyCode: e.keyCode
+                        }
+                    }))
+                }
+            } else {
+                delete keyboard[e.keyCode];
             }
-        } else {
-            delete keyboard[e.keyCode];
+            e.preventDefault();
         }
-        e.preventDefault();
     }
     
     function keyDown(key) {

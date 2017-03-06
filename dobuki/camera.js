@@ -30,12 +30,15 @@
         if(value && camera!==camera3d) {
             camera = camera3d;
             copyCamera(camera2d,camera);
-            camera.position.set(0,0,400);
         } else if(!value && camera===camera3d) {
             camera = camera2d;
             copyCamera(camera3d,camera);
-            camera.position.set(0,0,400);
         }
+    }
+
+    function initCameras() {
+        camera2d.position.set(0,0,400);
+        camera3d.position.set(0,0,400);
     }
 
     function isCamera3d() {
@@ -48,6 +51,20 @@
         to.quaternion.copy(from.quaternion);
     }
 
+    function getCameraPosition() {
+        return {
+            'is3d' : isCamera3d(),
+            'position' : camera.position.toArray(),
+            'quaternion' : camera.quaternion.toArray(),
+        };
+    }
+
+    function setCameraPosition(data) {
+        setCamera3d(data.is3d);
+        camera.quaternion.fromArray(data.quaternion);
+        camera.position.fromArray(data.position);
+    }
+
     function destroyEverything() {
     }
 
@@ -57,6 +74,8 @@
     core.setCamera3d = setCamera3d;
     core.isCamera3d = isCamera3d;
     core.getCamera = getCamera;
+    core.setCameraPosition = setCameraPosition;
+    core.getCameraPosition = getCameraPosition;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**
@@ -77,5 +96,6 @@
         camera.updateProjectionMatrix();
     });
 
+    initCameras();
     setCamera3d(true);
 })));

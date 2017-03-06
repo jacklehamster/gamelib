@@ -8,7 +8,6 @@
     var cuts = {};
     var cutArray = [];
     var cutCount = 0;
-    window.ca = cuts;
 
     var textures = [null];
     var slots = {};
@@ -42,14 +41,14 @@
                 canvas.addEventListener("update", updateTextureEvent);
                 textures[index] = tex;
                 canvas.setAttribute("texture", index.toString());
+                canvas.style.position = "absolute";
+                canvas.style.left = 0;
+                canvas.style.top = 0;
 
 //                document.body.appendChild(canvas);
             } else {
                 canvas.width = canvas.height = 1;
             }
-            canvas.style.position = "absolute";
-            canvas.style.left = 0;
-            canvas.style.top = 0;
             initCanvas(canvas);
         }
         return canvases[url];
@@ -73,6 +72,7 @@
             var subpipe = urlpipe.slice(0,urlpipe.length-1);
             var processString = urlpipe[urlpipe.length-1];
             var subCanvas = fetchCanvas(subpipe, frame);
+            canvas.setAttribute("base-url",subCanvas.getAttribute("base-url"));
             processCanvas(subCanvas, processString,canvas);
             subCanvas.addEventListener("update", function(event) {
                 var subCanvas = event.currentTarget;
@@ -92,12 +92,14 @@
             } else if(core.isGif(url)) {
                 var gif = core.getGif(url);
                 canvas.setAttribute("animated", true);
+                canvas.setAttribute("base-url",url);
                 if(gif.frameInfos[frame] && gif.frameInfos[frame].ready) {
                     drawGif(gif, frame, canvas);
                 } else {
                     gif.callbacks[frame] = drawGif.bind(null, gif, frame, canvas);
                 }
             } else {
+                canvas.setAttribute("base-url",url);
                 var image = core.loadImage(url, function() {
                     canvas.width = image.naturalWidth;
                     canvas.height = image.naturalHeight;
@@ -159,9 +161,31 @@
         } else if(processString.indexOf("border")===0) {
             outputCanvas.width = canvas.width;
             outputCanvas.height = canvas.height;
+            initCanvas(outputCanvas);
             outputCtx.drawImage(canvas,0,0);
+            outputCtx.beginPath();
             outputCtx.rect(0,0,canvas.width-1,canvas.height-1);
             outputCtx.stroke();
+        } else if(processString.indexOf("text:")===0) {
+            outputCanvas.width = canvas.width;
+            outputCanvas.height = canvas.height;
+            initCanvas(outputCanvas);
+            outputCtx.fillStyle = "#000000";
+            outputCtx.font = '18px Comic';
+            outputCtx.fillText(processString.split("text:")[1],0,canvas.height);
+        } else if(processString.indexOf("shadow")===0) {
+            outputCanvas.width = canvas.width;
+            outputCanvas.height = canvas.height;
+            initCanvas(outputCanvas);
+            var ctx = canvas.getContext("2d");
+            var data = ctx.getImageData(0,0,canvas.width,canvas.height);
+            for(var i=0; i<data.data.length; i++) {
+                if(i%4!==3) {
+                    data.data[i] = 0;
+                }
+            }
+            window.dd = data;
+            outputCtx.putImageData(data,0,0);
         }
     }
 
@@ -191,6 +215,7 @@
             cut = {
                 index: cutCount++,
                 url: url,
+                baseUrl: null,
                 cut: [],
                 animated: false,
             };
@@ -217,6 +242,7 @@
             var cutcut = [ uvX, 1-uvY-uvH, uvX+uvW, 1-uvY ];
 
             cut.animated = canvas.getAttribute("animated")==="true";
+            cut.baseUrl = canvas.getAttribute("base-url");
             cut.cut[frame].tex = slot.tex;
             cut.cut[frame].uv = new Float32Array(uvOrder.length);
             for(var u=0; u<uvOrder.length; u++) {

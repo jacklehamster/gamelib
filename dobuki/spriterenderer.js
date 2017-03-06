@@ -9,6 +9,7 @@
     var spriteRenderers = [];
     var tempVector = new THREE.Vector3(), tempQuaternion = new THREE.Quaternion(), cameraQuaternionArray = new Float32Array(4);
     var camera, cameraChanged;
+    var calcIndexFunction;
 
     /**
      *  HEADER
@@ -31,92 +32,131 @@
         this.imageCount = 0;
         this.shift = { x: 0, y: 0 };
         this.mesh = createMesh();
+
+        var self = this;
+        this.display = function (collection) {
+            if(self.lastDisplayTime < core.time) {
+                self.lastDisplayTime = core.time;
+                self.imageCount = 0;
+            }
+            if(collection.constructor===SpriteObject) {
+                addSpritePerspective(collection);
+            } else {
+                collection.forEach(addSpritePerspective);
+            }
+        }
+
+        function addSpritePerspective(spriteObject) {
+            var image = null;
+            var cut = spriteObject.visible !== false ? core.getCut(spriteObject.img) : null;
+            if(cut && cut.ready) {
+                var index = self.imageCount;
+                if(!self.images[index]) {
+                    self.images[index] = new SpriteImage(index);
+                }
+
+                image = self.images[index];
+                var quat = spriteObject.faceCamera ? null : identityQuaternionArray;
+                if(image.quaternionArray !== quat) {
+                    image.quaternionArray = quat;
+                    image.quatDirty = true;
+                }
+                var pX = (spriteObject.pos[0] - self.shift.x);
+                var pY = (spriteObject.pos[1] - self.shift.y);
+                var pZ = (spriteObject.pos[2]);
+                if(pX !== image.position[0] || pY !== image.position[1] || pZ !== image.position[2]) {
+                    image.position[0] = pX;
+                    image.position[1] = pY;
+                    image.position[2] = pZ;
+                    image.positionDirty = true;
+                }
+
+                if(spriteObject.size[0] !== image.size[0] || spriteObject.size[1] !== image.size[1] || spriteObject.size[2] !== image.size[2]) {
+                    image.size[0] = spriteObject.size[0]; image.size[1] = spriteObject.size[1]; image.size[2] = spriteObject.size[2];
+                    var vertices = planeGeometry.attributes.position.array;
+                    for(var v=0; v<vertices.length; v++) {
+                        image.vertices[v] = vertices[v] * spriteObject.size[v%3];
+                    }
+                    image.verticesDirty = true;
+                }
+
+                if(image.uv !== cut.uv) {
+                    image.uv = cut.uv;
+                    image.uvDirty = true;
+                }
+
+                if(image.tex !== cut.tex) {
+                    image.tex = cut.tex;
+                    image.texDirty = true;
+                }
+
+                if(image.light !== spriteObject.light) {
+                    image.light = spriteObject.light;
+                    image.lightDirty = true;
+                }
+                self.imageOrder[index] = image;
+                self.imageCount++;
+            }
+            return image;
+        }
+
         spriteRenderers.push(this);
     }
 
+    SpriteRenderer.prototype.lastDisplayTime = 0;
     SpriteRenderer.prototype.destroy = destroySprite;
-    SpriteRenderer.prototype.clear = clear;
     SpriteRenderer.prototype.render = render;
     SpriteRenderer.prototype.updateGraphics = updateGraphics;
-    SpriteRenderer.prototype.addSpritePerspective = addSpritePerspective;
+
+    function SpriteImage(index) {
+        this.index = index;
+        this.position = new Float32Array(3).fill(0);
+        this.tex = 0;
+        this.size = new Float32Array(3).fill(0);
+        this.uv = null;
+        this.vertices = new Float32Array(planeGeometry.attributes.position.array.length);
+        this.light = 1;
+        this.zIndex = 0;
+        this.quaternionArray = null;
+        this.positionDirty = true;
+        this.verticesDirty = true;
+        this.texDirty = true;
+        this.uvDirty = true;
+        this.lightDirty = true;
+        this.quatDirty = true;
+    }
+    SpriteImage.prototype.index = 0;
+    SpriteImage.prototype.position = null;
+    SpriteImage.prototype.tex = 0;
+    SpriteImage.prototype.size = null;
+    SpriteImage.prototype.uv = null;
+    SpriteImage.prototype.vertices = null;
+    SpriteImage.prototype.light = 1;
+    SpriteImage.prototype.zIndex = 0;
+    SpriteImage.prototype.quaternionArray = null;
+    SpriteImage.prototype.positionDirty = true;
+    SpriteImage.prototype.verticesDirty = true;
+    SpriteImage.prototype.texDirty = true;
+    SpriteImage.prototype.uvDirty = true;
+    SpriteImage.prototype.lightDirty = true;
+    SpriteImage.prototype.quatDirty = true;
+
+    function SpriteObject(x,y,z, width,height, faceCamera, light, img) {
+        this.pos = new Float32Array([x,y,z]);
+        this.size = new Float32Array([width, height,1]);
+        this.faceCamera = faceCamera;
+        this.light = light;
+        this.img = img;
+    }
+    SpriteObject.prototype.pos = null;
+    SpriteObject.prototype.size = null;
+    SpriteObject.prototype.faceCamera = false;
+    SpriteObject.prototype.light = 1;
+    SpriteObject.prototype.img = -1;
 
     /**
      *  FUNCTION DEFINITIONS
      */
-
-    function clear() {
-        this.imageCount = 0;
-    }
-
-    function addSpritePerspective(pos, offset, size, img, light, faceCamera) {
-        var image = null;
-        var cut = core.getCut(img);
-        if(cut && cut.ready) {
-            if(!this.images[this.imageCount]) {
-                var index = this.imageCount;
-                this.images[this.imageCount] = {
-                    index: index,
-                    position:new Float32Array(3),
-                    tex:0,
-                    size: [0,0,0],
-                    uv: null,
-                    vertices: new Float32Array(planeGeometry.attributes.position.array.length),
-                    light:1,
-                    zIndex:0,
-                    quaternionArray: null,
-                    positionDirty: true,
-                    verticesDirty: true,
-                    texDirty: true,
-                    uvDirty: true,
-                    lightDirty: true,
-                    quatDirty: true,
-                };
-            }
-
-            image = this.images[this.imageCount];
-            var quat = faceCamera ? null : identityQuaternionArray;
-            if(image.quaternionArray !== quat) {
-                image.quaternionArray = quat;
-                image.quatDirty = true;
-            }
-            var pX = (pos[0] + offset[0] - this.shift.x);
-            var pY = (pos[1] + offset[1] - this.shift.y);
-            var pZ = (pos[2]);
-            if(pX !== image.position[0] || pY !== image.position[1] || pZ !== image.position[2]) {
-                image.position[0] = pX;
-                image.position[1] = pY;
-                image.position[2] = pZ;
-                image.positionDirty = true;
-            }
-
-            if(size[0] !== image.size[0] || size[1] !== image.size[1] || size[2] !== image.size[2]) {
-                image.size[0] = size[0]; image.size[1] = size[1]; image.size[2] = size[2];
-                var vertices = planeGeometry.attributes.position.array;
-                for(var v=0; v<vertices.length; v++) {
-                    image.vertices[v] = vertices[v] * size[v%3];
-                }
-                image.verticesDirty = true;
-            }
-
-            if(image.uv !== cut.uv) {
-                image.uv = cut.uv;
-                image.uvDirty = true;
-            }
-
-            if(image.tex !== cut.tex) {
-                image.tex = cut.tex;
-                image.texDirty = true;
-            }
-
-            if(image.light !== light) {
-                image.light = light;
-                image.lightDirty = true;
-            }
-            this.imageOrder[this.imageCount] = image;
-            this.imageCount++;
-        }
-        return image;
-    }
 
     function createMesh() {
         var geometry = new THREE.BufferGeometry();
@@ -140,7 +180,6 @@
                     fragmentShader: fragmentShader,
                     transparent:true,
                     depthWrite: false,
-//                    alphaTest: 0.95,
                 } );
             }
         );
@@ -150,19 +189,33 @@
     }
 
     function setZIndex(image, quaternion) {
-        if(cameraChanged || image.positionDirty) {
-            tempVector.set(image.position[0], image.position[1], image.position[2]);
-            tempVector.applyQuaternion(quaternion);
-            image.zIndex = tempVector.z;
+        var index = calcIndexFunction(image, quaternion);
+        if (index!==undefined) {
+            image.zIndex = index;
         }
     }
 
+    function calculateIndexFunction(image, quaternion) {
+        if(cameraChanged || image.positionDirty) {
+            tempVector.set(image.position[0], image.position[1], image.position[2]);
+            tempVector.applyQuaternion(quaternion);
+            return tempVector.z;
+        }
+    }
+
+    function setCalculateIndexFunction(calcIndexFunc) {
+        calcIndexFunction = calcIndexFunc ? calcIndexFunc : calculateIndexFunction;
+    }
+
     function sortImages(images,count) {
-        DOK.turboSort(images,count);
+        DOK.turboSort(images,count,indexFunction);
+    }
+
+    function indexFunction(a) {
+        return a.zIndex;
     }
 
     function render(camera) {
-        var i;
         var images = this.images;
         var imageCount = this.imageCount;
         var pointCount = planeGeometry.attributes.position.count;
@@ -235,7 +288,7 @@
 
         tempQuaternion.copy(camera.quaternion);
         tempQuaternion.inverse();
-        for (i = 0; i < imageCount; i++) {
+        for (var i = 0; i < imageCount; i++) {
             setZIndex(images[i], tempQuaternion);
         }
 
@@ -274,65 +327,65 @@
         var uvChanged = false;
         var lightChanged = false;
 
-        var indices = planeGeometry.index.array;
-
         for(var i=0;i<imageCount;i++) {
             var image = images[i];
             var index = image.index;
 
             var quatDirty = image.quatDirty || !image.quaternionArray && cameraChanged;
-            if(quatDirty) {
+            if (quatDirty) {
                 var quaternionArray = image.quaternionArray ? image.quaternionArray : defaultQuaternionArray;
-                geo_quaternion.set(quaternionArray, index*16);
-                geo_quaternion.set(quaternionArray, index*16+4);
-                geo_quaternion.set(quaternionArray, index*16+8);
-                geo_quaternion.set(quaternionArray, index*16+12);
+                geo_quaternion.set(quaternionArray, index * 16);
+                geo_quaternion.set(quaternionArray, index * 16 + 4);
+                geo_quaternion.set(quaternionArray, index * 16 + 8);
+                geo_quaternion.set(quaternionArray, index * 16 + 12);
                 image.quatDirty = false;
                 quatChanged = true;
             }
 
-            if(image.positionDirty) {
-                geo_spot.set(image.position, index*12);
-                geo_spot.set(image.position, index*12+3);
-                geo_spot.set(image.position, index*12+6);
-                geo_spot.set(image.position, index*12+9);
+            if (image.positionDirty) {
+                geo_spot.set(image.position, index * 12);
+                geo_spot.set(image.position, index * 12 + 3);
+                geo_spot.set(image.position, index * 12 + 6);
+                geo_spot.set(image.position, index * 12 + 9);
                 image.positionDirty = false;
                 positionChanged = true;
             }
 
-            if(image.verticesDirty) {
+            if (image.verticesDirty) {
                 geo_pos.set(image.vertices, index * 12);
                 image.verticesDirty = false;
                 verticesChanged = true;
             }
 
-            if(image.texDirty) {
-                geo_tex.fill(image.texture, index*4, index*4+4);
+            if (image.texDirty) {
+                geo_tex.fill(image.texture, index * 4, index * 4 + 4);
                 image.texDirty = false;
                 texChanged = true;
             }
 
-            if(image.uvDirty) {
-                geo_uv.set(image.uv, index*8);
+            if (image.uvDirty) {
+                geo_uv.set(image.uv, index * 8);
                 image.uvDirty = false;
                 uvChanged = true;
             }
 
-            if(image.lightDirty) {
-                geo_light.fill(image.light, index*4, index*4+4);
+            if (image.lightDirty) {
+                geo_light.fill(image.light, index * 4, index * 4 + 4);
                 image.lightDirty = false;
-                lightChanged= true;
+                lightChanged = true;
             }
+        }
 
+        var indices = planeGeometry.index.array;
+        for(i=0;i<imageCount;i++) {
             var indexBase = imageOrder[i].index * 4;
             for(var j=0; j<6; j++) {
                 geo_index[i * 6 + j] = indices[j] + indexBase;
             }
-
         }
 
-        if(geometry.drawRange.start !== 0 || geometry.drawRange.count != imageCount*vertices.length) {
-            geometry.setDrawRange(0, imageCount*vertices.length);
+        if(geometry.drawRange.start !== 0 || geometry.drawRange.count != imageCount*planeGeometry.index.count) {
+            geometry.setDrawRange(0, imageCount*planeGeometry.index.count);
         }
 
         if(lightChanged) {
@@ -379,11 +432,13 @@
      *  PUBLIC DECLARATIONS
      */
     core.SpriteRenderer = SpriteRenderer;
+    core.SpriteObject = SpriteObject;
+    core.setCalculateIndexFunction = setCalculateIndexFunction;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**
      *   PROCESSES
      */
-
+    calcIndexFunction = calculateIndexFunction;
 
  })));
