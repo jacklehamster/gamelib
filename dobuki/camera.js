@@ -84,16 +84,13 @@
     window.addEventListener("resize",function() {
         var gameWidth = innerWidth;
         var gameHeight = innerHeight;
-        if(camera.isOrthographicCamera) {
-            camera.left = -gameWidth/2;
-            camera.right = gameWidth/2;
-            camera.top = gameHeight/2;
-            camera.bottom = -gameHeight/2;
-        }
-        else if(camera.isPerspectiveCamera) {
-            camera.aspect = gameWidth / gameHeight;
-        }
-        camera.updateProjectionMatrix();
+        camera2d.left = -gameWidth/2;
+        camera2d.right = gameWidth/2;
+        camera2d.top = gameHeight/2;
+        camera2d.bottom = -gameHeight/2;
+        camera2d.updateProjectionMatrix();
+        camera3d.aspect = gameWidth / gameHeight;
+        camera3d.updateProjectionMatrix();
     });
 
     initCameras();

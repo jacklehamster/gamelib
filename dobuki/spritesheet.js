@@ -179,9 +179,12 @@
             initCanvas(outputCanvas);
             var ctx = canvas.getContext("2d");
             var data = ctx.getImageData(0,0,canvas.width,canvas.height);
-            for(var i=0; i<data.data.length; i++) {
-                if(i%4!==3) {
+            for(var i=0; i<data.data.length; i+=4) {
+                if(data.data[i+3]!==0) {
                     data.data[i] = 0;
+                    data.data[i+1] = 0;
+                    data.data[i+2] = 0;
+                    data.data[i+3] = 127;
                 }
             }
             window.dd = data;

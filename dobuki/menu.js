@@ -101,7 +101,28 @@
         div.style.top = position[1] + "px";
         return div;    
     }
-    
+
+    function clearListeners() {
+        document.removeEventListener("keydown", handleKey);
+    }
+
+    function addListeners() {
+        document.addEventListener("keydown", handleKey);
+    }
+
+    function handleKey(e) {
+        if(e.target===document.body) {
+            if(e.type === "keydown") {
+                document.dispatchEvent(new CustomEvent("firstPress",{
+                     detail: {
+                         keyCode: e.keyCode
+                     }
+                 }))
+            }
+            e.preventDefault();
+        }
+    }
+
     function showMenu(menu, trigger) {
         if(getActiveMenu() && trigger) {
             menuStack.push(getActiveMenu());
@@ -110,6 +131,8 @@
         if(trigger) {
             triggerMenu(menu);
         }
+        clearListeners();
+        addListeners();
     }
     
     function hideMenu(menu) {
@@ -118,6 +141,7 @@
         if(menuStack.length) {
             showMenu(menuStack.pop(), true);
         }
+        clearListeners();
     }
 
     function toggleMenu(menu) {

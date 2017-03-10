@@ -61,9 +61,9 @@
                     image.quaternionArray = quat;
                     image.quatDirty = true;
                 }
-                var pX = (spriteObject.pos[0] - self.shift.x);
-                var pY = (spriteObject.pos[1] - self.shift.y);
-                var pZ = (spriteObject.pos[2]);
+                var pX = (spriteObject.pos[0] + spriteObject.offset[0] - self.shift.x);
+                var pY = (spriteObject.pos[1] + spriteObject.offset[1] - self.shift.y);
+                var pZ = (spriteObject.pos[2] + spriteObject.offset[2]);
                 if(pX !== image.position[0] || pY !== image.position[1] || pZ !== image.position[2]) {
                     image.position[0] = pX;
                     image.position[1] = pY;
@@ -141,18 +141,24 @@
     SpriteImage.prototype.lightDirty = true;
     SpriteImage.prototype.quatDirty = true;
 
-    function SpriteObject(x,y,z, width,height, faceCamera, light, img) {
+    function SpriteObject(
+            x,y,z,
+            width, height,
+            faceCamera, light, img,
+            offsetX, offsetY, offsetZ) {
         this.pos = new Float32Array([x,y,z]);
         this.size = new Float32Array([width, height,1]);
         this.faceCamera = faceCamera;
         this.light = light;
         this.img = img;
+        this.offset = new Float32Array([offsetX||0, offsetY||0, offsetZ||0]);
     }
     SpriteObject.prototype.pos = null;
     SpriteObject.prototype.size = null;
     SpriteObject.prototype.faceCamera = false;
     SpriteObject.prototype.light = 1;
     SpriteObject.prototype.img = -1;
+    SpriteObject.prototype.offset = null;
 
     /**
      *  FUNCTION DEFINITIONS

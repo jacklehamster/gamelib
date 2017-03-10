@@ -36,11 +36,6 @@
             if(e.type === "keydown") {
                 if(!keyboard[e.keyCode]) {
                     keyboard[e.keyCode] = core.time;
-                    document.dispatchEvent(new CustomEvent("firstPress",{
-                        detail: {
-                            keyCode: e.keyCode
-                        }
-                    }))
                 }
             } else {
                 delete keyboard[e.keyCode];
