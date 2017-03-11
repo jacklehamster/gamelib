@@ -48,7 +48,7 @@
             div.appendChild(d);
             var arrow = document.createElement("img");
             menu.arrow = arrow;
-            arrow.src = "arrow.png";
+            arrow.src = "lib/dobuki/images/arrow.png";
             arrow.style.position = "absolute";
             arrow.style.left = "10px";
             arrow.style.top = "15px";

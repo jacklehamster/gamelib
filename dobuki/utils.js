@@ -117,7 +117,7 @@
     loadAsync("package.json", function(str) {
         try {
             var object = JSON.parse(str);
-            var icon = object.window.icon || 'lib/dobuki/images/logo.png';
+            var icon = object.window.icon || 'lib/dobuki/images/logo.ico';
             document.title = core.title = object.window.title || 'Dobuki Game';
             addLinkToHeadTag("shortcut icon", icon);
             addLinkToHeadTag("apple-touch-icon", object.window['apple-touch-icon'] || icon);
