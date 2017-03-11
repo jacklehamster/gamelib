@@ -19,7 +19,7 @@
      */   
     function stopAllMusic() {
         for(var i in audios) {
-            if(isPlaying(i)) {
+            if(audios.hasOwnProperty(i) && isPlaying(i)) {
                 stopMusic(i);
             }
         }

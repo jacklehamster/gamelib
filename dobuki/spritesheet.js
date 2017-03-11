@@ -198,7 +198,7 @@
         if(cut && cut.cut[frame] && cut.cut[frame].ready) {
             return cut.cut[frame];
         }
-        if(cut.url) {
+        if(cut && cut.url) {
             cut = getCutByURL(cut.url, frame);
             return cut.cut[frame];
         }

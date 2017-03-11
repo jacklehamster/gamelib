@@ -18,6 +18,7 @@
         'setup.js',
         'spritesheet.js',
         'utils.js',
+        'objectpool.js',
     ]);
     core.logScript();
     var currentScript = core.getCurrentScript();
@@ -37,7 +38,7 @@
         this.display = function (collection) {
             if(self.lastDisplayTime < core.time) {
                 self.lastDisplayTime = core.time;
-                self.imageCount = 0;
+                clear();
             }
             if(collection.constructor===SpriteObject) {
                 addSpritePerspective(collection);
@@ -46,13 +47,19 @@
             }
         }
 
+        function clear() {
+            self.imageCount = 0;
+            DOK.recycleAll(SpriteObject);
+        }
+
         function addSpritePerspective(spriteObject) {
             var image = null;
             var cut = spriteObject.visible !== false ? core.getCut(spriteObject.img) : null;
             if(cut && cut.ready) {
                 var index = self.imageCount;
                 if(!self.images[index]) {
-                    self.images[index] = new SpriteImage(index);
+                    self.images[index] = new SpriteImage();
+                    self.images[index].index = index;
                 }
 
                 image = self.images[index];
@@ -108,22 +115,10 @@
     SpriteRenderer.prototype.render = render;
     SpriteRenderer.prototype.updateGraphics = updateGraphics;
 
-    function SpriteImage(index) {
-        this.index = index;
+    function SpriteImage() {
         this.position = new Float32Array(3).fill(0);
-        this.tex = 0;
         this.size = new Float32Array(3).fill(0);
-        this.uv = null;
         this.vertices = new Float32Array(planeGeometry.attributes.position.array.length);
-        this.light = 1;
-        this.zIndex = 0;
-        this.quaternionArray = null;
-        this.positionDirty = true;
-        this.verticesDirty = true;
-        this.texDirty = true;
-        this.uvDirty = true;
-        this.lightDirty = true;
-        this.quatDirty = true;
     }
     SpriteImage.prototype.index = 0;
     SpriteImage.prototype.position = null;
@@ -141,18 +136,30 @@
     SpriteImage.prototype.lightDirty = true;
     SpriteImage.prototype.quatDirty = true;
 
-    function SpriteObject(
+    function SpriteObject() {
+        this.pos = new Float32Array(3).fill(0);
+        this.size = new Float32Array([0,0,1]);
+        this.offset = new Float32Array(3).fill(0);
+    }
+
+    SpriteObject.prototype.init = function(
             x,y,z,
             width, height,
             faceCamera, light, img,
             offsetX, offsetY, offsetZ) {
-        this.pos = new Float32Array([x,y,z]);
-        this.size = new Float32Array([width, height,1]);
+        this.pos[0] = x;
+        this.pos[1] = y;
+        this.pos[2] = z;
+        this.size[0] = width;
+        this.size[1] = height;
         this.faceCamera = faceCamera;
         this.light = light;
         this.img = img;
-        this.offset = new Float32Array([offsetX||0, offsetY||0, offsetZ||0]);
-    }
+        this.offset[0] = offsetX || 0;
+        this.offset[1] = offsetY || 0;
+        this.offset[2] = offsetZ || 0;
+        return this;
+    };
     SpriteObject.prototype.pos = null;
     SpriteObject.prototype.size = null;
     SpriteObject.prototype.faceCamera = false;
