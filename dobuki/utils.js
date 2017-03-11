@@ -117,13 +117,10 @@
     loadAsync("package.json", function(str) {
         try {
             var object = JSON.parse(str);
-            document.title = core.title = object.window.title;
-            addLinkToHeadTag("shortcut icon", object.window.icon);
-            addLinkToHeadTag("apple-touch-icon",
-                object.window['apple-touch-icon'] || object.window.icon
-            );
-            addLinkToHeadTag()
-
+            var icon = object.window.icon || 'lib/dobuki/images/logo.png';
+            document.title = core.title = object.window.title || 'Dobuki Game';
+            addLinkToHeadTag("shortcut icon", icon);
+            addLinkToHeadTag("apple-touch-icon", object.window['apple-touch-icon'] || icon);
         } catch(e) {
         }
     });
