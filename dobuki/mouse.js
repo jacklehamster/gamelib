@@ -35,8 +35,12 @@
     function onMove(e) {
         var touches = e.changedTouches;
         if(e.buttons & 1 || touches) {
-            var dx = (touches ? touches[0].pageX : e.pageX) - spot.x;
-            var dy = (touches ? touches[0].pageY : e.pageY) - spot.y;
+            var newX = (touches ? touches[0].pageX : e.pageX);
+            var newY = (touches ? touches[0].pageY : e.pageY);
+            var dx = newX - spot.x;
+            var dy = newY - spot.y;
+            spot.x = newX;
+            spot.y = newY;
             for(var i=0;i<callbacks.length;i++) {
                 callbacks[i](dx,dy);
             }
