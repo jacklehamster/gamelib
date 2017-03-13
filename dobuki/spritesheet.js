@@ -61,6 +61,12 @@
         context.msImageSmoothingEnabled = false;
     }
 
+    function customEvent(type, detail) {
+        var evt = document.createEvent("CustomEvent");
+        evt.initCustomEvent(type, false, false,detail||{});
+        return evt;
+    }
+
     function fetchCanvas(urlpipe, frame) {
         var canvas = getCanvas(frame+":"+urlpipe.join("|"));
         if (canvas) {
@@ -77,7 +83,7 @@
             subCanvas.addEventListener("update", function(event) {
                 var subCanvas = event.currentTarget;
                 processCanvas(subCanvas, processString, canvas);
-                canvas.dispatchEvent(new CustomEvent("update"));
+                canvas.dispatchEvent(customEvent("update"));
             });
             return canvas;
         } else {
@@ -106,7 +112,7 @@
                     initCanvas(canvas);
                     canvas.getContext("2d").drawImage(image,0,0);
 //                    document.body.appendChild(canvas);
-                    canvas.dispatchEvent(new CustomEvent("update"));
+                    canvas.dispatchEvent(customEvent("update"));
                 });
             }
             return canvas;
@@ -118,7 +124,7 @@
         canvas.height = gif.header.height;
         initCanvas(canvas);
         canvas.getContext("2d").drawImage(gif.canvases[frame],0,0);
-        canvas.dispatchEvent(new CustomEvent("update"));
+        canvas.dispatchEvent(customEvent("update"));
     }
 
     function processCanvas(canvas, processString, outputCanvas) {
@@ -127,15 +133,17 @@
         var splits = processString.split(",");
         if(splits.length===4 && splits.every(function(num) { return !isNaN(num); })) {
             splits = splits.map(function(o) { return parseInt(o); });
-            var drawWidth = Math.min(canvas.width, splits[2]);
-            var drawHeight = Math.min(canvas.height, splits[3]);
-            outputCanvas.width = drawWidth;
-            outputCanvas.height = drawHeight;
-            initCanvas(outputCanvas);
-            outputCtx.drawImage(canvas,
-                splits[0], splits[1], drawWidth, drawHeight,
-                0,0,drawWidth,drawHeight
-            );
+            var drawWidth = Math.min(canvas.width-splits[0], splits[2]);
+            var drawHeight = Math.min(canvas.height-splits[1], splits[3]);
+            if(drawWidth>0 && drawHeight>0) {
+                outputCanvas.width = drawWidth;
+                outputCanvas.height = drawHeight;
+                initCanvas(outputCanvas);
+                outputCtx.drawImage(canvas,
+                    splits[0], splits[1], drawWidth, drawHeight,
+                    0,0,drawWidth,drawHeight
+                );
+            }
         } else if(processString.indexOf("scale:")===0) {
             if(canvas.width>1 && canvas.height>1) {
                 var scale = processString.split(":")[1].split(",");
@@ -234,7 +242,7 @@
         if(slot) {
             slots[canvas.getAttribute("url")] = slot;
             canvas.addEventListener("update", updateSpritesheetEvent);
-            canvas.dispatchEvent(new CustomEvent("update"));
+            canvas.dispatchEvent(customEvent("update"));
 
             var uvX = slot.x / SPRITE_SHEET_SIZE;
             var uvY = slot.y / SPRITE_SHEET_SIZE;
@@ -290,7 +298,7 @@
         var slot = slots[url];
         var spritesheet = getCanvas("tex-"+slot.tex, true);
         spritesheet.getContext("2d").drawImage(canvas,slot.x,slot.y);
-        spritesheet.dispatchEvent(new CustomEvent("update"));
+        spritesheet.dispatchEvent(customEvent("update"));
     }
 
     function updateTextureEvent(event) {

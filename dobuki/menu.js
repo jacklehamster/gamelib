@@ -110,14 +110,18 @@
         document.addEventListener("keydown", handleKey);
     }
 
+    function customEvent(type, detail) {
+        var evt = document.createEvent("CustomEvent");
+        evt.initCustomEvent(type, false, false,detail||{});
+        return evt;
+    }
+
     function handleKey(e) {
         if(e.target===document.body) {
             if(e.type === "keydown") {
-                document.dispatchEvent(new CustomEvent("firstPress",{
-                     detail: {
-                         keyCode: e.keyCode
-                     }
-                 }))
+                document.dispatchEvent(customEvent("firstPress",{
+                     keyCode: e.keyCode
+                 }));
             }
             e.preventDefault();
         }

@@ -20,8 +20,13 @@
        }
    }
 
+   function getLastScript() {
+       var scripts = document.getElementsByTagName('script');
+       return scripts[scripts.length-1];
+   }
+
    function getCurrentScript() {
-        var currentScript = document.currentScript.src;
+        var currentScript = getLastScript().src;
         var regex = /[a-zA-Z-]*:\/\/[^/]+(\/([^/]+\/)+)(.+)/g;
         var match = regex.exec(currentScript);
         return !match ? null : {

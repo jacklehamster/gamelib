@@ -3,10 +3,14 @@
         typeof define === 'function' && define.amd ? define(['exports'], factory) :
             (factory((global.DOK = global.DOK || {}), global));
 }(window, (function (core, global) { 'use strict';
+    var camera;
     var camera2d = new THREE.OrthographicCamera(-innerWidth/2, innerWidth/2, innerHeight/2, -innerHeight/2, 0.1, 1000000 );
     var camera3d = new THREE.PerspectiveCamera( 75, innerWidth / innerHeight, 0.1, 1000000 );
-    var camera;
-    var dirty = true;
+    var cameraQuaternionData = {
+            array: new Float32Array(4),
+            forwardMovement: new THREE.Vector3(0,0,1),
+            version: 0,
+        }, cameraQuaternionLastVersion = 0;
 
     /**
      *  HEADER
@@ -34,6 +38,23 @@
             camera = camera2d;
             copyCamera(camera3d,camera);
         }
+        camera.quaternion.onChange(onCameraQuaternionChanged);
+        onCameraQuaternionChanged();
+
+    }
+
+    function onCameraQuaternionChanged() {
+        cameraQuaternionData.version++;
+    }
+
+    function getCameraQuaternionData() {
+        if(cameraQuaternionLastVersion !== cameraQuaternionData.version) {
+            camera.quaternion.toArray(cameraQuaternionData.array);
+            cameraQuaternionData.forwardMovement.set(0,0,1);
+            cameraQuaternionData.forwardMovement.applyQuaternion(camera.quaternion);
+            cameraQuaternionLastVersion = cameraQuaternionData.version;
+        }
+        return cameraQuaternionData;
     }
 
     function initCameras() {
@@ -46,7 +67,6 @@
     }
 
     function copyCamera(from, to) {
-//        to.copy(from);
         to.position.copy(from.position);
         to.quaternion.copy(from.quaternion);
     }
@@ -76,6 +96,7 @@
     core.getCamera = getCamera;
     core.setCameraPosition = setCameraPosition;
     core.getCameraPosition = getCameraPosition;
+    core.getCameraQuaternionData = getCameraQuaternionData;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**

@@ -5,6 +5,7 @@
  }(this, (function (core) { 'use strict';
     
     var spot = {x:0,y:0}, callbacks = [];
+    var touchSpotX = {}, touchSpotY = {};
     /**
      *  HEADER
      */   
@@ -19,30 +20,67 @@
     function onDown(e) {
         var touches = e.changedTouches;
         if(touches) {
-            spot.x = touches[0].pageX;
-            spot.y = touches[0].pageY;
+            for(var i=0;i<touches.length;i++) {
+                var touch = touches[i];
+                touchSpotX[touch.identifier] =touch.pageX;
+                touchSpotY[touch.identifier] =touch.pageY;
+            }
         } else {
             spot.x = e.pageX;
             spot.y = e.pageY;
+        }
+        for(var i=0;i<callbacks.length;i++) {
+            callbacks[i](null,null,true);
         }
         e.preventDefault();
     }
     
     function onUp(e) {
-        e.preventDefault();        
+
+        var hasTouch = false;
+        if(e.changedTouches) {
+            for(var i=0;i<e.changedTouches.length;i++) {
+                delete touchSpotX[touch.identifier];
+                delete touchSpotY[touch.identifier];
+            }
+            for(var i in touchSpotX) {
+                hasTouch = true;
+            }
+
+        }
+
+        for(var i=0;i<callbacks.length;i++) {
+            callbacks[i](null,null, hasTouch);
+        }
+
+        e.preventDefault();
     }
     
     function onMove(e) {
         var touches = e.changedTouches;
-        if(e.buttons & 1 || touches) {
-            var newX = (touches ? touches[0].pageX : e.pageX);
-            var newY = (touches ? touches[0].pageY : e.pageY);
-            var dx = newX - spot.x;
-            var dy = newY - spot.y;
-            spot.x = newX;
-            spot.y = newY;
+        if(!touches) {
+            if(e.buttons & 1) {
+                var newX = e.pageX;
+                var newY = e.pageY;
+                var dx = newX - spot.x;
+                var dy = newY - spot.y;
+                spot.x = newX;
+                spot.y = newY;
+                for(var i=0;i<callbacks.length;i++) {
+                    callbacks[i](dx,dy,true);
+                }
+            }
+        } else {
+            var dx = 0, dy = 0;
+            for(var i=0;i<touches.length;i++) {
+                var touch = touches[i];
+                dx += touch.pageX - touchSpotX[touch.identifier];
+                dy += touch.pageY - touchSpotY[touch.identifier];
+                touchSpotX[touch.identifier] = touch.pageX;
+                touchSpotY[touch.identifier] = touch.pageY;
+            }
             for(var i=0;i<callbacks.length;i++) {
-                callbacks[i](dx,dy);
+                callbacks[i](dx,dy,true);
             }
         }
         e.preventDefault();
@@ -55,10 +93,12 @@
     }
 
     function activateTouch() {
+
         document.addEventListener("mousedown", onDown);
         document.addEventListener("touchstart", onDown);
         document.addEventListener("mouseup", onUp);
         document.addEventListener("touchend", onUp);
+        document.addEventListener("touchcancel", onUp);
         document.addEventListener("mousemove", onMove);
         document.addEventListener("touchmove", onMove);
     }
@@ -68,6 +108,7 @@
         document.removeEventListener("touchstart", onDown);
         document.removeEventListener("mouseup", onUp);
         document.removeEventListener("touchend", onUp);
+        document.removeEventListener("touchcancel", onUp);
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("touchmove", onMove);
     }

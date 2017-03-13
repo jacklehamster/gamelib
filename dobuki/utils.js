@@ -14,40 +14,48 @@
             };
         }
 
-        if(true || typeof(Array.prototype.entries) === "undefined") {
-            Array.prototype.entries = function() {
-                return makeIterable(this);
-            };
-            Array.prototype.it = null;
+        if ( !window.requestAnimationFrame ) {
+            setupRequestAnimationFrame();
         }
 
-        var done = {
-            value: undefined,
-            done: true,
-        };
-        function makeIterable(array) {
-            var it = array.it ? array.it : {
-                index: 0,
-                array: null,
-                obj: {
-                    value: [0, 0],
-                    done: false,
-                },
-                next: function next() {
-                    if (this.index >= this.array.length) {
-                        return done;
-                    }
-                    var obj = this.obj;
-                    obj.value[0] = this.index;
-                    obj.value[1] = this.array[this.index];
-                    this.index++;
-                    return obj;
-                }
-            };
-            array.it = it;
-            it.array = array;
-            it.index = 0;
-            return it;
+        if (typeof(Float32Array.prototype.fill) === 'undefined') {
+            Float32Array.prototype.fill = fill_compat;
+        }
+
+        if (typeof(Uint32Array.prototype.fill) === 'undefined') {
+            Uint32Array.prototype.fill = fill_compat;
+        }
+    }
+
+    function fill_compat(value,start,end) {
+        start = start||0;
+        end = end||this.length;
+        for(var i=start;i<end;i++) {
+            this[i] = value;
+        }
+        return this;
+    }
+
+    function setupRequestAnimationFrame() {
+        window.requestAnimationFrame = ( function() {
+            return window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                window.oRequestAnimationFrame ||
+                window.msRequestAnimationFrame ||
+                requestAnimationFrame_compat;
+
+        } )();
+
+        var timeout, time = 0;
+        function requestAnimationFrame_compat( callback) {
+            timeout = setTimeout( timeoutCallback, 1000 / 60 , callback);
+        }
+
+        function timeoutCallback(callback) {
+            clearTimeout(timeout);
+            var dt = Date.now() - time;
+            callback(dt);
+            time = Date.now();
         }
     }
 
@@ -101,6 +109,13 @@
         document.head.appendChild(link);
     }
 
+    function setupQuaternionArrays() {
+        core.groundQuaternionArray =  new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(1,0,0), -Math.PI/2
+        ).toArray(new Float32Array(4));
+
+    }
+
     /**
      *  PUBLIC DECLARATIONS
      */
@@ -113,6 +128,7 @@
     core.logScript();
     core.title = "";
     definePrototypes();
+    setupQuaternionArrays();
 
     loadAsync("package.json", function(str) {
         try {

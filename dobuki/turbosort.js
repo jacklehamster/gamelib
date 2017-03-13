@@ -27,11 +27,12 @@
     }
 
     function getMinMax(array, offset, length) {
-        var minNum = Number.MAX_VALUE;
-        var maxNum = -Number.MAX_VALUE;
-        var previousNum = -Number.MAX_VALUE;
+        var firstIndex = indexFunction(array[offset]);
+        var minNum = firstIndex;
+        var maxNum = firstIndex;
+        var previousNum = firstIndex;
         var inOrder = true;
-        for(var i=0; i<length; i++) {
+        for(var i=1; i<length; i++) {
             var index = indexFunction(array[offset+i]);
             if(previousNum > index) {
                 inOrder = false;
@@ -130,6 +131,9 @@
     }
 
     function swap(array, a, b) {
+        if(isNaN(a) || isNaN(b)) {
+            debugger;
+        }
         if(a !== b) {
             var temp = array[a];
             array[a] = array[b];

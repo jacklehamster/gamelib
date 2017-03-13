@@ -7,9 +7,8 @@
     var planeGeometry = new THREE.PlaneBufferGeometry(1, 1);
     var identityQuaternionArray = (new THREE.Quaternion()).toArray(new Float32Array(4));
     var spriteRenderers = [];
-    var tempVector = new THREE.Vector3(), tempQuaternion = new THREE.Quaternion(), cameraQuaternionArray = new Float32Array(4);
-    var camera, cameraChanged;
-    var calcIndexFunction;
+    var tempVector = new THREE.Vector3(), tempQuaternion = new THREE.Quaternion();
+    var calcIndexFunction = calculateIndexFunction;
 
     /**
      *  HEADER
@@ -54,7 +53,7 @@
 
         function addSpritePerspective(spriteObject) {
             var image = null;
-            var cut = spriteObject.visible !== false ? core.getCut(spriteObject.img) : null;
+            var cut = spriteObject && spriteObject.visible !== false ? core.getCut(spriteObject.img) : null;
             if(cut && cut.ready) {
                 var index = self.imageCount;
                 if(!self.images[index]) {
@@ -63,9 +62,13 @@
                 }
 
                 image = self.images[index];
-                var quat = spriteObject.faceCamera ? null : identityQuaternionArray;
-                if(image.quaternionArray !== quat) {
-                    image.quaternionArray = quat;
+                var quat = spriteObject.quaternionArray || core.getCameraQuaternionData().array;
+                if(image.quaternionArray[0] !== quat[0]
+                    || image.quaternionArray[1] !== quat[1]
+                    || image.quaternionArray[2] !== quat[2]
+                    || image.quaternionArray[3] !== quat[3]
+                ) {
+                    image.quaternionArray.set(quat);
                     image.quatDirty = true;
                 }
                 var pX = (spriteObject.pos[0] + spriteObject.offset[0] - self.shift.x);
@@ -119,10 +122,11 @@
         this.position = new Float32Array(3).fill(0);
         this.size = new Float32Array(3).fill(0);
         this.vertices = new Float32Array(planeGeometry.attributes.position.array.length);
+        this.quaternionArray = new Float32Array(4).fill(0);
     }
     SpriteImage.prototype.index = 0;
     SpriteImage.prototype.position = null;
-    SpriteImage.prototype.tex = 0;
+    SpriteImage.prototype.tex = -1;
     SpriteImage.prototype.size = null;
     SpriteImage.prototype.uv = null;
     SpriteImage.prototype.vertices = null;
@@ -145,14 +149,14 @@
     SpriteObject.prototype.init = function(
             x,y,z,
             width, height,
-            faceCamera, light, img,
+            quaternionArray, light, img,
             offsetX, offsetY, offsetZ) {
         this.pos[0] = x;
         this.pos[1] = y;
         this.pos[2] = z;
         this.size[0] = width;
         this.size[1] = height;
-        this.faceCamera = faceCamera;
+        this.quaternionArray = quaternionArray;
         this.light = light;
         this.img = img;
         this.offset[0] = offsetX || 0;
@@ -162,7 +166,7 @@
     };
     SpriteObject.prototype.pos = null;
     SpriteObject.prototype.size = null;
-    SpriteObject.prototype.faceCamera = false;
+    SpriteObject.prototype.quaternionArray = false;
     SpriteObject.prototype.light = 1;
     SpriteObject.prototype.img = -1;
     SpriteObject.prototype.offset = null;
@@ -209,7 +213,7 @@
     }
 
     function calculateIndexFunction(image, quaternion) {
-        if(cameraChanged || image.positionDirty) {
+        if(true || image.positionDirty) {
             tempVector.set(image.position[0], image.position[1], image.position[2]);
             tempVector.applyQuaternion(quaternion);
             return tempVector.z;
@@ -225,6 +229,10 @@
     }
 
     function indexFunction(a) {
+        if(!a) {
+            debugger;
+            return 0;
+        }
         return a.zIndex;
     }
 
@@ -308,19 +316,7 @@
         sortImages(this.imageOrder, imageCount);
     }
 
-    function cameraQuaternionChanged() {
-        camera.quaternion.toArray(cameraQuaternionArray);
-        cameraChanged = true;
-    }
-
     function updateGraphics() {
-        if(camera !== DOK.getCamera()) {
-            camera = DOK.getCamera();
-            camera.quaternion.onChange(cameraQuaternionChanged);
-            cameraQuaternionChanged();
-        }
-        var defaultQuaternionArray = cameraQuaternionArray;
-        var vertices = planeGeometry.attributes.position.array;
         var images = this.images;
         var imageOrder = this.imageOrder;
         var imageCount = this.imageCount;
@@ -344,9 +340,8 @@
             var image = images[i];
             var index = image.index;
 
-            var quatDirty = image.quatDirty || !image.quaternionArray && cameraChanged;
-            if (quatDirty) {
-                var quaternionArray = image.quaternionArray ? image.quaternionArray : defaultQuaternionArray;
+            if (image.quatDirty) {
+                var quaternionArray = image.quaternionArray;
                 geo_quaternion.set(quaternionArray, index * 16);
                 geo_quaternion.set(quaternionArray, index * 16 + 4);
                 geo_quaternion.set(quaternionArray, index * 16 + 8);
@@ -371,7 +366,7 @@
             }
 
             if (image.texDirty) {
-                geo_tex.fill(image.texture, index * 4, index * 4 + 4);
+                geo_tex.fill(image.tex, index * 4, index * 4 + 4);
                 image.texDirty = false;
                 texChanged = true;
             }
@@ -420,7 +415,6 @@
             geometry.attributes.uv.needsUpdate = true;
         }
         geometry.index.needsUpdate = true;
-        cameraChanged = false;
     }
 
     function destroyEverything() {
