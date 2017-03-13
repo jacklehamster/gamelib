@@ -41,7 +41,7 @@
             }
             if(collection.constructor===SpriteObject) {
                 addSpritePerspective(collection);
-            } else {
+            } else if(collection.forEach) {
                 collection.forEach(addSpritePerspective);
             }
         }

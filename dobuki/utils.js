@@ -113,6 +113,16 @@
         core.groundQuaternionArray =  new THREE.Quaternion().setFromAxisAngle(
             new THREE.Vector3(1,0,0), -Math.PI/2
         ).toArray(new Float32Array(4));
+        core.southQuaternionArray =  new THREE.Quaternion().toArray(new Float32Array(4));
+        core.northQuaternionArray =  new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0,1,0), -Math.PI
+        ).toArray(new Float32Array(4));
+        core.westQuaternionArray =  new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0,1,0), -Math.PI/2
+        ).toArray(new Float32Array(4));
+        core.eastQuaternionArray =  new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0,1,0), Math.PI/2
+        ).toArray(new Float32Array(4));
 
     }
 

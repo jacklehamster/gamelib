@@ -53,7 +53,7 @@
             var c = Math.floor(i / gridCount);
             var obj = this.getSprite(x,y,c);
             if(obj) {
-                if(obj.isCollection) {
+                if(obj.forEach) {
                     obj.forEach(callback);
                 } else {
                     callback(obj);
