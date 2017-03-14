@@ -6,6 +6,7 @@
 
     var planeGeometry = new THREE.PlaneBufferGeometry(1, 1);
     var spriteRenderers = [];
+    var uniforms = null;
 
     /**
      *  HEADER
@@ -181,10 +182,14 @@
             ],
             function(vertexShader, fragmentShader, vertexShaderCommon) {
                 mesh.material = new THREE.ShaderMaterial( {
-                    uniforms: {
+                    uniforms: uniforms = {
                         texture:  {
                             type: 'tv',
-                            get value() { return DOK.getTextures() }
+                            get value() { return DOK.getTextures(); }
+                        },
+                        vCam : {
+                            type: "v3",
+                            get value() { return DOK.getCamera().position; }
                         },
                     },
                     vertexShader: vertexShaderCommon + vertexShader,
