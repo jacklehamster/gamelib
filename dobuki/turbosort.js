@@ -131,9 +131,6 @@
     }
 
     function swap(array, a, b) {
-        if(isNaN(a) || isNaN(b)) {
-            debugger;
-        }
         if(a !== b) {
             var temp = array[a];
             array[a] = array[b];

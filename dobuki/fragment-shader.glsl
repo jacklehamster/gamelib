@@ -7,11 +7,7 @@ void main() {
     vec2 uv = vUv;
 
     int iTex = int(vTex);
-//        gl_FragColor = texture2D( texture[0],  uv);
-    if(iTex==0) {
-        gl_FragColor = texture2D( texture[0],  uv);
-    }
-/*
+
     if(iTex==0) {
         gl_FragColor = texture2D( texture[0],  uv);
     } else if(iTex==1) {
@@ -45,7 +41,7 @@ void main() {
     } else if(iTex==15) {
         gl_FragColor = texture2D( texture[15],  uv);
     }
-*/
+
     gl_FragColor.x *= vLight;
     gl_FragColor.y *= vLight;
     gl_FragColor.z *= vLight;

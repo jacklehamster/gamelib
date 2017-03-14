@@ -5,10 +5,7 @@
 }(window, (function (core) { 'use strict';
 
     var planeGeometry = new THREE.PlaneBufferGeometry(1, 1);
-    var identityQuaternionArray = (new THREE.Quaternion()).toArray(new Float32Array(4));
     var spriteRenderers = [];
-    var tempVector = new THREE.Vector3(), tempQuaternion = new THREE.Quaternion();
-    var calcIndexFunction = calculateIndexFunction;
 
     /**
      *  HEADER
@@ -73,10 +70,8 @@
                 var pX = (spriteObject.pos[0] + spriteObject.offset[0]);
                 var pY = (spriteObject.pos[1] + spriteObject.offset[1]);
                 var pZ = (spriteObject.pos[2] + spriteObject.offset[2]);
-                if(pX !== image.position[0] || pY !== image.position[1] || pZ !== image.position[2]) {
-                    image.position[0] = pX;
-                    image.position[1] = pY;
-                    image.position[2] = pZ;
+                if(pX !== image.position.x || pY !== image.position.y || pZ !== image.position.z) {
+                    image.position.set(pX, pY, pZ);
                     image.positionDirty = true;
                 }
 
@@ -118,7 +113,7 @@
     SpriteRenderer.prototype.updateGraphics = updateGraphics;
 
     function SpriteImage() {
-        this.position = new Float32Array(3).fill(0);
+        this.position = new THREE.Vector3();
         this.size = new Float32Array(3).fill(0);
         this.vertices = new Float32Array(planeGeometry.attributes.position.array.length);
         this.quaternionArray = new Float32Array(4).fill(0);
@@ -204,28 +199,11 @@
         return mesh;
     }
 
-    function setZIndex(image, quaternion, position) {
-        var index = calcIndexFunction(image, quaternion, position);
-        if (index!==undefined) {
-            image.zIndex = index;
-        }
-    }
-
-    function calculateIndexFunction(image, quaternion, position) {
-        tempVector.set(
-            image.position[0] - position.x,
-            image.position[1] - position.y,
-            image.position[2] - position.z
-        );
-        tempVector.applyQuaternion(quaternion);
-        return - Math.abs(tempVector.z) - Math.abs(tempVector.x) - Math.abs(tempVector.y);
-    }
-
-    function setCalculateIndexFunction(calcIndexFunc) {
-        calcIndexFunction = calcIndexFunc ? calcIndexFunc : calculateIndexFunction;
-    }
-
     function sortImages(images,count) {
+        var camera = DOK.getCamera();
+        for (var i = 0; i < count; i++) {
+            images[i].zIndex = -camera.position.distanceToManhattan(images[i].position);
+        }
         DOK.turboSort(images,count,indexFunction);
     }
 
@@ -233,8 +211,7 @@
         return a.zIndex;
     }
 
-    function render(camera) {
-        var images = this.images;
+    function render() {
         var imageCount = this.imageCount;
         var pointCount = planeGeometry.attributes.position.count;
         var previousAttribute;
@@ -304,16 +281,12 @@
             geometry.index.setDynamic(true);
         }
 
-        tempQuaternion.copy(camera.quaternion);
-        tempQuaternion.inverse();
-        for (var i = 0; i < imageCount; i++) {
-            setZIndex(images[i], tempQuaternion, camera.position);
-        }
-
         sortImages(this.imageOrder, imageCount);
     }
 
     function updateGraphics() {
+        this.render();
+
         var images = this.images;
         var imageOrder = this.imageOrder;
         var imageCount = this.imageCount;
@@ -348,10 +321,10 @@
             }
 
             if (image.positionDirty) {
-                geo_spot.set(image.position, index * 12);
-                geo_spot.set(image.position, index * 12 + 3);
-                geo_spot.set(image.position, index * 12 + 6);
-                geo_spot.set(image.position, index * 12 + 9);
+                image.position.toArray(geo_spot, index * 12);
+                image.position.toArray(geo_spot, index * 12 + 3);
+                image.position.toArray(geo_spot, index * 12 + 6);
+                image.position.toArray(geo_spot, index * 12 + 9);
                 image.positionDirty = false;
                 positionChanged = true;
             }
@@ -436,12 +409,10 @@
      */
     core.SpriteRenderer = SpriteRenderer;
     core.SpriteObject = SpriteObject;
-    core.setCalculateIndexFunction = setCalculateIndexFunction;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**
      *   PROCESSES
      */
-    calcIndexFunction = calculateIndexFunction;
 
  })));
