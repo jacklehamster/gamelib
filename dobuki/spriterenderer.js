@@ -30,7 +30,6 @@
         this.images = [];
         this.imageOrder = [];
         this.imageCount = 0;
-        this.shift = { x: 0, y: 0 };
         this.mesh = createMesh();
 
         var self = this;
@@ -71,8 +70,8 @@
                     image.quaternionArray.set(quat);
                     image.quatDirty = true;
                 }
-                var pX = (spriteObject.pos[0] + spriteObject.offset[0] - self.shift.x);
-                var pY = (spriteObject.pos[1] + spriteObject.offset[1] - self.shift.y);
+                var pX = (spriteObject.pos[0] + spriteObject.offset[0]);
+                var pY = (spriteObject.pos[1] + spriteObject.offset[1]);
                 var pZ = (spriteObject.pos[2] + spriteObject.offset[2]);
                 if(pX !== image.position[0] || pY !== image.position[1] || pZ !== image.position[2]) {
                     image.position[0] = pX;
@@ -205,19 +204,21 @@
         return mesh;
     }
 
-    function setZIndex(image, quaternion) {
-        var index = calcIndexFunction(image, quaternion);
+    function setZIndex(image, quaternion, position) {
+        var index = calcIndexFunction(image, quaternion, position);
         if (index!==undefined) {
             image.zIndex = index;
         }
     }
 
-    function calculateIndexFunction(image, quaternion) {
-        if(true || image.positionDirty) {
-            tempVector.set(image.position[0], image.position[1], image.position[2]);
-            tempVector.applyQuaternion(quaternion);
-            return tempVector.z;
-        }
+    function calculateIndexFunction(image, quaternion, position) {
+        tempVector.set(
+            image.position[0] - position.x,
+            image.position[1] - position.y,
+            image.position[2] - position.z
+        );
+        tempVector.applyQuaternion(quaternion);
+        return - Math.abs(tempVector.z) - Math.abs(tempVector.x) - Math.abs(tempVector.y);
     }
 
     function setCalculateIndexFunction(calcIndexFunc) {
@@ -229,10 +230,6 @@
     }
 
     function indexFunction(a) {
-        if(!a) {
-            debugger;
-            return 0;
-        }
         return a.zIndex;
     }
 
@@ -310,7 +307,7 @@
         tempQuaternion.copy(camera.quaternion);
         tempQuaternion.inverse();
         for (var i = 0; i < imageCount; i++) {
-            setZIndex(images[i], tempQuaternion);
+            setZIndex(images[i], tempQuaternion, camera.position);
         }
 
         sortImages(this.imageOrder, imageCount);
@@ -432,7 +429,6 @@
         this.mesh = null;
         this.images.length = 0;
         this.imageCount = 0;
-        this.shift = { x:0, y:0 };
     }
 
     /**
