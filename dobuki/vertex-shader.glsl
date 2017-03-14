@@ -12,7 +12,7 @@ void main()  {
     vUv = uv;
 
     vec3 newPosition = rotateVectorByQuaternion( position, quaternion ) + spot;
-    vLight = 150.0 / distance(newPosition, vCam); //light;
+    vLight = 150.0 / distance(newPosition, vCam) * light;
 
     vec4 mvPosition = modelViewMatrix * vec4(newPosition, 1.0 );
     gl_Position = projectionMatrix * mvPosition;
