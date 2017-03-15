@@ -45,4 +45,6 @@ void main() {
     gl_FragColor.x *= vLight;
     gl_FragColor.y *= vLight;
     gl_FragColor.z *= vLight;
+//        gl_FragColor.w *= vLight;
+
 }

@@ -10,7 +10,7 @@
             array: new Float32Array(4),
             forwardMovement: new THREE.Vector3(0,0,1),
             version: 0,
-        }, cameraQuaternionLastVersion = 0;
+        }, lastQuat = new THREE.Quaternion();
 
     /**
      *  HEADER
@@ -38,21 +38,14 @@
             camera = camera2d;
             copyCamera(camera3d,camera);
         }
-        camera.quaternion.onChange(onCameraQuaternionChanged);
-        onCameraQuaternionChanged();
-
-    }
-
-    function onCameraQuaternionChanged() {
-        cameraQuaternionData.version++;
     }
 
     function getCameraQuaternionData() {
-        if(cameraQuaternionLastVersion !== cameraQuaternionData.version) {
+        if(!camera.quaternion.equals(lastQuat)) {
             camera.quaternion.toArray(cameraQuaternionData.array);
             cameraQuaternionData.forwardMovement.set(0,0,1);
             cameraQuaternionData.forwardMovement.applyQuaternion(camera.quaternion);
-            cameraQuaternionLastVersion = cameraQuaternionData.version;
+            lastQuat.copy(camera.quaternion);
         }
         return cameraQuaternionData;
     }
