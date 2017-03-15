@@ -3,7 +3,7 @@
  	typeof define === 'function' && define.amd ? define(['exports'], factory) :
  	(factory((global.DOK = global.DOK || {})));
  }(this, (function (core) { 'use strict';
- 
+
     /**
      *  FUNCTION DEFINITIONS
      */

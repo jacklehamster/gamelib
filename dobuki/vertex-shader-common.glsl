@@ -1,4 +1,4 @@
-vec3 rotateVectorByQuaternion( vec3 v, vec4 q ) {
+vec3 rotateVectorByQuaternion( in vec3 v, in vec4 q ) {
 
     vec3 dest = vec3( 0.0 );
 
@@ -22,7 +22,7 @@ vec3 rotateVectorByQuaternion( vec3 v, vec4 q ) {
 
 }
 
-vec4 axisAngleToQuaternion( vec3 axis, float angle ) {
+vec4 axisAngleToQuaternion( in vec3 axis, in float angle ) {
 
     vec4 dest = vec4( 0.0 );
 

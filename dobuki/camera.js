@@ -10,7 +10,12 @@
             array: new Float32Array(4),
             forwardMovement: new THREE.Vector3(0,0,1),
             version: 0,
-        }, lastQuat = new THREE.Quaternion();
+        }, lastQuat = new THREE.Quaternion(), tempQuat = new THREE.Quaternion(),
+        tempQuatArray = new Float32Array(4), tempVector = new THREE.Vector3(),
+        straightVector = new THREE.Vector3(0,0,1);
+    var groundQuat = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(1,0,0), -Math.PI/2
+    );
 
     /**
      *  HEADER
@@ -78,6 +83,13 @@
         camera.position.fromArray(data.position);
     }
 
+    function shadowQuatArray(x,y) {
+        var angle = -Math.atan2(y-camera.position.z,x-camera.position.x) - Math.PI/2;
+        tempQuat.setFromAxisAngle(new THREE.Vector3(0,1,0), angle);
+        tempQuat.multiply(groundQuat);
+        return tempQuat.toArray(tempQuatArray);
+    }
+
     function destroyEverything() {
     }
 
@@ -90,6 +102,7 @@
     core.setCameraPosition = setCameraPosition;
     core.getCameraPosition = getCameraPosition;
     core.getCameraQuaternionData = getCameraQuaternionData;
+    core.shadowQuatArray = shadowQuatArray;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**

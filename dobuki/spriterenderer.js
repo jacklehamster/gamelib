@@ -139,6 +139,7 @@
         this.pos = new Float32Array(3).fill(0);
         this.size = new Float32Array([0,0,1]);
         this.offset = new Float32Array(3).fill(0);
+        this.quaternionArray = new Float32Array(4).fill(0);
     }
 
     SpriteObject.prototype.init = function(
@@ -151,7 +152,7 @@
         this.pos[2] = z;
         this.size[0] = width;
         this.size[1] = height;
-        this.quaternionArray = quaternionArray;
+        this.quaternionArray.set(quaternionArray ? quaternionArray : core.getCameraQuaternionData().array);
         this.light = light;
         this.img = img;
         this.offset[0] = offsetX || 0;
@@ -161,7 +162,7 @@
     };
     SpriteObject.prototype.pos = null;
     SpriteObject.prototype.size = null;
-    SpriteObject.prototype.quaternionArray = false;
+    SpriteObject.prototype.quaternionArray = null;
     SpriteObject.prototype.light = 1;
     SpriteObject.prototype.img = -1;
     SpriteObject.prototype.offset = null;
