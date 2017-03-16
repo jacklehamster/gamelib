@@ -2,19 +2,20 @@
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
         typeof define === 'function' && define.amd ? define(['exports'], factory) :
             (factory((global.DOK = global.DOK || {}), global));
-}(window, (function (core, global) { 'use strict';
+}(window, function (core, global) {
+    'use strict';
     var camera;
-    var camera2d = new THREE.OrthographicCamera(-innerWidth/2, innerWidth/2, innerHeight/2, -innerHeight/2, 0.1, 1000000 );
-    var camera3d = new THREE.PerspectiveCamera( 75, innerWidth / innerHeight, 0.1, 1000000 );
+    var camera2d = new THREE.OrthographicCamera(-innerWidth / 2, innerWidth / 2, innerHeight / 2, -innerHeight / 2, 0.1, 1000000);
+    var camera3d = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000000);
     var cameraQuaternionData = {
             array: new Float32Array(4),
-            forwardMovement: new THREE.Vector3(0,0,1),
+            forwardMovement: new THREE.Vector3(0, 0, 1),
             version: 0,
         }, lastQuat = new THREE.Quaternion(), tempQuat = new THREE.Quaternion(),
         tempQuatArray = new Float32Array(4), tempVector = new THREE.Vector3(),
-        straightVector = new THREE.Vector3(0,0,1);
+        straightVector = new THREE.Vector3(0, 0, 1);
     var groundQuat = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(1,0,0), -Math.PI/2
+        new THREE.Vector3(1, 0, 0), -Math.PI / 2
     );
 
     /**
@@ -36,32 +37,37 @@
     }
 
     function setCamera3d(value) {
-        if(value && camera!==camera3d) {
+        if (value && camera !== camera3d) {
             camera = camera3d;
-            copyCamera(camera2d,camera);
-        } else if(!value && camera===camera3d) {
+            copyCamera(camera2d, camera);
+        } else if (!value && camera === camera3d) {
             camera = camera2d;
-            copyCamera(camera3d,camera);
+            copyCamera(camera3d, camera);
         }
+        updateQuaternionData();
+    }
+
+    function updateQuaternionData() {
+        camera.quaternion.toArray(cameraQuaternionData.array);
+        cameraQuaternionData.forwardMovement.set(0, 0, 1);
+        cameraQuaternionData.forwardMovement.applyQuaternion(camera.quaternion);
     }
 
     function getCameraQuaternionData() {
-        if(!camera.quaternion.equals(lastQuat)) {
-            camera.quaternion.toArray(cameraQuaternionData.array);
-            cameraQuaternionData.forwardMovement.set(0,0,1);
-            cameraQuaternionData.forwardMovement.applyQuaternion(camera.quaternion);
+        if (!camera.quaternion.equals(lastQuat)) {
+            updateQuaternionData();
             lastQuat.copy(camera.quaternion);
         }
         return cameraQuaternionData;
     }
 
     function initCameras() {
-        camera2d.position.set(0,0,400);
-        camera3d.position.set(0,0,400);
+        camera2d.position.set(0, 0, 400);
+        camera3d.position.set(0, 0, 400);
     }
 
     function isCamera3d() {
-        return camera===camera3d;
+        return camera === camera3d;
     }
 
     function copyCamera(from, to) {
@@ -71,9 +77,9 @@
 
     function getCameraPosition() {
         return {
-            'is3d' : isCamera3d(),
-            'position' : camera.position.toArray(),
-            'quaternion' : camera.quaternion.toArray(),
+            'is3d': isCamera3d(),
+            'position': camera.position.toArray(),
+            'quaternion': camera.quaternion.toArray(),
         };
     }
 
@@ -83,9 +89,9 @@
         camera.position.fromArray(data.position);
     }
 
-    function shadowQuatArray(x,y) {
-        var angle = -Math.atan2(y-camera.position.z,x-camera.position.x) - Math.PI/2;
-        tempQuat.setFromAxisAngle(new THREE.Vector3(0,1,0), angle);
+    function shadowQuatArray(x, y) {
+        var angle = -Math.atan2(y - camera.position.z, x - camera.position.x) - Math.PI / 2;
+        tempQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
         tempQuat.multiply(groundQuat);
         return tempQuat.toArray(tempQuatArray);
     }
@@ -108,13 +114,13 @@
     /**
      *   PROCESSES
      */
-    window.addEventListener("resize",function() {
+    window.addEventListener("resize", function () {
         var gameWidth = innerWidth;
         var gameHeight = innerHeight;
-        camera2d.left = -gameWidth/2;
-        camera2d.right = gameWidth/2;
-        camera2d.top = gameHeight/2;
-        camera2d.bottom = -gameHeight/2;
+        camera2d.left = -gameWidth / 2;
+        camera2d.right = gameWidth / 2;
+        camera2d.top = gameHeight / 2;
+        camera2d.bottom = -gameHeight / 2;
         camera2d.updateProjectionMatrix();
         camera3d.aspect = gameWidth / gameHeight;
         camera3d.updateProjectionMatrix();
@@ -122,4 +128,4 @@
 
     initCameras();
     setCamera3d(true);
-})));
+}));
