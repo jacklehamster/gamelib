@@ -25,6 +25,15 @@
         if (typeof(Uint32Array.prototype.fill) === 'undefined') {
             Uint32Array.prototype.fill = fill_compat;
         }
+
+        Array.prototype.getFrame = function (index) {
+            index = index|0;
+            return this[index % this.length];
+        }
+        Number.prototype.getFrame = function () {
+            return this;
+        }
+
     }
 
     function fill_compat(value,start,end) {
