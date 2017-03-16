@@ -132,7 +132,9 @@
         core.eastQuaternionArray =  new THREE.Quaternion().setFromAxisAngle(
             new THREE.Vector3(0,1,0), Math.PI/2
         ).toArray(new Float32Array(4));
-
+        core.ceilingQuaternionArray = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(1,0,0), Math.PI/2
+        ).toArray(new Float32Array(4));
     }
 
     /**
