@@ -59,12 +59,12 @@
                 id:menu.id + ".arrow",
                 loop:function() {
                     if(getActiveMenu() !== menu) {
-                        arrow.style.display = "none";
+                        arrow.style.display = disp = "none";
                         menu.selection = -1;
                         return false;
                     }
                     var newDisp = menu.selection>=0?"":"none";
-                    if(newDisp != disp) {
+                    if(newDisp !== disp) {
                         disp = newDisp;
                         arrow.style.display = disp;
                     }

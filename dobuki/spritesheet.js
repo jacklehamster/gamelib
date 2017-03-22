@@ -195,8 +195,18 @@
                     data.data[i+3] = 127;
                 }
             }
-            window.dd = data;
             outputCtx.putImageData(data,0,0);
+        } else if(processString.indexOf("cross")===0) {
+            outputCanvas.width = canvas.width;
+            outputCanvas.height = canvas.height;
+            initCanvas(outputCanvas);
+            outputCtx.drawImage(canvas,0,0);
+            outputCtx.beginPath();
+            outputCtx.moveTo(canvas.width/2, 0);
+            outputCtx.lineTo(canvas.width/2, canvas.height);
+            outputCtx.moveTo(0, canvas.height/2);
+            outputCtx.lineTo(canvas.width, canvas.height/2);
+            outputCtx.stroke();
         }
     }
 

@@ -5,7 +5,7 @@
  }(this, (function (core) { 'use strict';
     
     var count = 0;
-    var triggers = {};
+    var triggers = [];
     
     /**
      *  HEADER
@@ -20,42 +20,50 @@
      *  FUNCTION DEFINITIONS
      */   
     function trigger(cell) {
-        var id = cell.id ? cell.id : cell.x+"_"+cell.y;
-        if(!triggers[id]) {
-            count++;
-        }
-        triggers[id] = cell;
-        if(count===1) {
+        if (!triggers.length) {
             DOK.addLoop(triggerLoop);
         }
+        if (triggers.indexOf(cell)<0) {
+            triggers.push(cell);
+        }
     }
+
     function untrigger(cell) {
-        var id = cell.id ? cell.id : cell.x+"_"+cell.y;
-        if(trigger[id]) {
-            count--;
-        }
-        delete triggers[id];
-        if(!count) {
-            DOK.removeLoop(triggerLoop);
+        var index = triggers.indexOf(cell);
+        if (index>=0) {
+            triggers[index] = null;
         }
     }
+
     function triggered(cell) {
-        var id = cell.id ? cell.id : cell.x+"_"+cell.y;
-        return triggers[id];
+        return triggers.indexOf(cell) >= 0;
     }
     
     function clearTriggers() {
-        for(var i in triggers) {
-            delete triggers[i];
-        }
+        triggers.length = 0;
     }
     
     function triggerLoop() {
-        for(var i in triggers) {
-            if(triggers[i].loop) {
+        var removed = false;
+        for(var i = 0; i < triggers.length; i++) {
+            if(triggers[i] && triggers[i].loop) {
                 if(triggers[i].loop() === false) {
-                    untrigger(triggers[i]);
+                    delete triggers[i];
+                    removed = true;
                 }
+            }
+        }
+        if (removed) {
+            var j = 0;
+            for(i=0; i<triggers.length;i++) {
+                if(triggers[j]) {
+                    triggers[j] = triggers[i];
+                    j++;
+                }
+            }
+            triggers.length = j;
+            if (!triggers.length) {
+                DOK.removeLoop(triggerLoop);
             }
         }
     }
