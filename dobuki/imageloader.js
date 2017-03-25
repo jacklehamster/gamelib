@@ -11,6 +11,8 @@
     var loadingBar = null;
     var visualProgress = 0;
     var onLoadCallback = null;
+    var loaded = 0;
+    var loadTotal = 0;
     
     /**
      *  HEADER
@@ -33,6 +35,7 @@
         image.onload = function(event) {
             onLoad.call(image,event);
             loading--;
+            loaded++;
             checkLoad();
         };
         image.crossOrigin = '';
@@ -40,8 +43,17 @@
             image: image,
             url: url,
         });
+        loadTotal++;
         checkLoad();
         return image;
+    }
+
+    function loadFile(url,onLoad) {
+        loadTotal++;
+        core.loadAsync(url, function(result) {
+            loaded++;
+            onLoad(result);
+        });
     }
     
     function checkLoad() {
@@ -53,11 +65,13 @@
         if(index===imageQueue.length) {
             index = 0;
             imageQueue.length = 0;
+            loaded = 0;
+            loadTotal = 0;
         }
     }
     
     function getLoadingProgress() {
-        return !imageQueue.length ? 1 : index / imageQueue.length;
+        return !loadTotal ? 1 : loaded / loadTotal;
     }
     
     function refreshLoadingBar() {
@@ -108,6 +122,7 @@
      *  PUBLIC DECLARATIONS
      */
     core.loadImage = loadImage;
+    core.loadFile = loadFile;
     core.getLoadingProgress = getLoadingProgress;
     core.getLoadingBar = getLoadingBar;
     core.setOnLoad = setOnLoad;
