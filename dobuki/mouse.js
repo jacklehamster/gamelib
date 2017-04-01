@@ -6,6 +6,7 @@
     
     var spot = {x:0,y:0}, callbacks = [];
     var touchSpotX = {}, touchSpotY = {};
+    var mdown = false;
     /**
      *  HEADER
      */   
@@ -17,20 +18,24 @@
     /**
      *  FUNCTION DEFINITIONS
      */   
-    function onDown(e) {
-        var touches = e.changedTouches;
-        if(touches) {
-            for(var i=0;i<touches.length;i++) {
-                var touch = touches[i];
-                touchSpotX[touch.identifier] =touch.pageX;
-                touchSpotY[touch.identifier] =touch.pageY;
+    function onDown(e)
+    {
+        if(e.target.attributes['tap']===undefined) {
+            var touches = e.changedTouches;
+            if(touches) {
+                for(var i=0;i<touches.length;i++) {
+                    var touch = touches[i];
+                    touchSpotX[touch.identifier] =touch.pageX;
+                    touchSpotY[touch.identifier] =touch.pageY;
+                }
+            } else {
+                spot.x = e.pageX;
+                spot.y = e.pageY;
             }
-        } else {
-            spot.x = e.pageX;
-            spot.y = e.pageY;
-        }
-        for(var i=0;i<callbacks.length;i++) {
-            callbacks[i](null,null,true);
+            mdown = true;
+            for(var i=0;i<callbacks.length;i++) {
+                callbacks[i](null,null,true);
+            }
         }
         e.preventDefault();
     }
@@ -52,14 +57,14 @@
         for(var i=0;i<callbacks.length;i++) {
             callbacks[i](null,null, hasTouch);
         }
-
+        mdown = false;
         e.preventDefault();
     }
     
     function onMove(e) {
         var touches = e.changedTouches;
         if(!touches) {
-            if(e.buttons & 1) {
+            if(e.buttons & 1 && mdown) {
                 var newX = e.pageX;
                 var newY = e.pageY;
                 var dx = newX - spot.x;
@@ -69,8 +74,10 @@
                 for(var i=0;i<callbacks.length;i++) {
                     callbacks[i](dx,dy,true);
                 }
+            } else {
+                mdown = false;
             }
-        } else {
+        } else if(mdown) {
             var dx = 0, dy = 0;
             for(var i=0;i<touches.length;i++) {
                 var touch = touches[i];
