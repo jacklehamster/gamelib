@@ -9,6 +9,7 @@
     var indices = planeGeometry.index.array;
     var spriteRenderers = [];
     var uniforms = null;
+    var indexProcessor = function(){};
 
     /**
      *  HEADER
@@ -225,10 +226,14 @@
     function sortImages(images,count) {
         var camera = DOK.getCamera();
         for (var i = 0; i < count; i++) {
-            images[i].zIndex = -Math.abs(images[i].position.y) * 10
-                -camera.position.distanceToManhattan(images[i].position);
+            images[i].zIndex = -camera.position.distanceToManhattan(images[i].position);
         }
+        indexProcessor(images, count);
         DOK.turboSort(images,count,indexFunction);
+    }
+
+    function setIndexProcessor(fun) {
+        indexProcessor = fun ? fun : function(){};
     }
 
     function indexFunction(a) {
@@ -424,6 +429,7 @@
      */
     core.SpriteRenderer = SpriteRenderer;
     core.SpriteObject = SpriteObject;
+    core.setIndexProcessor = setIndexProcessor;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**
