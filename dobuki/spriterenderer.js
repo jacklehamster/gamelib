@@ -76,13 +76,15 @@
                 if (spriteObject.size[0] !== image.size[0]
                     || spriteObject.size[1] !== image.size[1]
                     || spriteObject.size[2] !== image.size[2]
+                    || image.positionDirty
                 ) {
                     image.size[0] = spriteObject.size[0];
                     image.size[1] = spriteObject.size[1];
                     image.size[2] = spriteObject.size[2];
                     var vertices = planeGeometry.attributes.position.array;
                     for(var v=0; v<vertices.length; v++) {
-                        image.vertices[v] = vertices[v] * spriteObject.size[v%3];
+                        image.vertices[v]
+                            = vertices[v] * spriteObject.size[v%3] + image.spotArray[v];
                     }
                     image.verticesDirty = true;
                 }
@@ -177,6 +179,16 @@
 
     function createMesh() {
         var geometry = new THREE.BufferGeometry();
+        var vertices = new Float32Array( [
+            -1.0, -1.0,  1.0,
+            1.0, -1.0,  1.0,
+            1.0,  1.0,  1.0,
+
+            1.0,  1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            -1.0, -1.0,  1.0
+        ] );
+        geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
         var mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial());
 
         core.loadAsync(
@@ -201,6 +213,7 @@
                     fragmentShader: fragmentShader,
                     transparent:true,
                     depthWrite: false,
+                    depthTest: true,
                 } );
             }
         );
@@ -363,7 +376,7 @@
             geo_index.set(imageOrder[i].indexArray, i * 6);
         }
 
-        if(geometry.drawRange.start !== 0 || geometry.drawRange.count != imageCount*planeGeometry.index.count) {
+        if(geometry.drawRange.start !== 0 || geometry.drawRange.count !== imageCount*planeGeometry.index.count) {
             geometry.setDrawRange(0, imageCount*planeGeometry.index.count);
         }
 

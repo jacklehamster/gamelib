@@ -11,7 +11,7 @@ void main()  {
     vTex = tex;
     vUv = uv;
 
-    vec3 newPosition = rotateVectorByQuaternion( position, quaternion ) + spot;
+    vec3 newPosition = rotateVectorByQuaternion( position - spot, quaternion ) + spot;
     vLight = 1.0/ sqrt(500.0 / distance(newPosition, vCam)) * light;
 
     vec4 mvPosition = modelViewMatrix * vec4(newPosition, 1.0 );
