@@ -145,24 +145,24 @@
                 );
             }
         } else if(processString.indexOf("scale:")===0) {
-            if(canvas.width>1 && canvas.height>1) {
+            if (canvas.width > 1 && canvas.height > 1) {
                 var scale = processString.split(":")[1].split(",");
                 outputCanvas.width = Math.ceil(canvas.width * Math.abs(scale[0]));
-                outputCanvas.height = Math.ceil(canvas.height * Math.abs(scale[1%scale.length]));
+                outputCanvas.height = Math.ceil(canvas.height * Math.abs(scale[1 % scale.length]));
                 initCanvas(outputCanvas);
-                if(scale[0]<0 || scale[1%scale.length]<0) {
+                if (scale[0] < 0 || scale[1 % scale.length] < 0) {
                     var sign = [
-                        scale[0]<0?-1:1,
-                        scale[1%scale.length]<0?-1:1,
+                        scale[0] < 0 ? -1 : 1,
+                        scale[1 % scale.length] < 0 ? -1 : 1,
                     ];
                     outputCtx.translate(
-                        sign[0]<0?outputCanvas.width:0,
-                        sign[1]<0?outputCanvas.height:0);
+                        sign[0] < 0 ? outputCanvas.width : 0,
+                        sign[1] < 0 ? outputCanvas.height : 0);
                     outputCtx.scale(sign[0], sign[1]);
                 }
                 outputCtx.drawImage(canvas,
-                    0,0,canvas.width,canvas.height,
-                    0,0,outputCanvas.width,outputCanvas.height
+                    0, 0, canvas.width, canvas.height,
+                    0, 0, outputCanvas.width, outputCanvas.height
                 );
                 outputCtx.restore();
             }
