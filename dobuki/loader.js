@@ -1,9 +1,9 @@
 (function (global, factory) {
- 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
- 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
- 	(factory((global.DOK = global.DOK || {})));
- }(this, (function (core) { 'use strict';
-    
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+        typeof define === 'function' && define.amd ? define(['exports'], factory) :
+            (factory((global.DOK = global.DOK || {})));
+}(this, (function (core) { 'use strict';
+
     var index = 0;
     var imageQueue = [];
     var loadLimit = 3;
@@ -13,10 +13,10 @@
     var onLoadCallback = null;
     var loaded = 0;
     var loadTotal = 0;
-    
+
     /**
      *  HEADER
-     */   
+     */
     core.requireScripts([
         'setup.js',
         'loop.js',
@@ -25,11 +25,12 @@
 
     /**
      *  FUNCTION DEFINITIONS
-     */   
+     */
     function setOnLoad(onLoad) {
         onLoadCallback = onLoad;
+        document.body.removeChild(core.getLoadingBar());
     }
-     
+
     function loadImage(url,onLoad) {
         var image = new Image();
         image.onload = function(event) {
@@ -55,7 +56,7 @@
             onLoad(result);
         });
     }
-    
+
     function checkLoad() {
         while(index<imageQueue.length && loading<loadLimit) {
             imageQueue[index].image.src = imageQueue[index].url;
@@ -69,11 +70,11 @@
             loadTotal = 0;
         }
     }
-    
+
     function getLoadingProgress() {
         return !loadTotal ? 1 : loaded / loadTotal;
     }
-    
+
     function refreshLoadingBar() {
         if(loadingBar) {
             var ctx = loadingBar.getContext("2d");
@@ -84,7 +85,7 @@
                 core.removeLoop(refreshLoadingBar);
             }
             ctx.fillRect(10,10,(loadingBar.width-20)*visualProgress,loadingBar.height-20);
-            
+
             if(actualProgress>=1) {
                 if(onLoadCallback) {
                     setTimeout(onLoadCallback,100);
@@ -92,7 +93,7 @@
             }
         }
     }
-    
+
     function getLoadingBar() {
         if(!loadingBar) {
             loadingBar = document.createElement("canvas");
@@ -113,11 +114,15 @@
         document.body.appendChild(loadingBar);
         return loadingBar;
     }
-     
+
     function destroyEverything() {
         imageQueue = [];
     }
-   
+
+    function initializeLoader() {
+        DOK.getLoadingBar();
+    }
+
     /**
      *  PUBLIC DECLARATIONS
      */
@@ -131,6 +136,6 @@
     /**
      *   PROCESSES
      */
-    
-     
- })));
+    document.addEventListener("DOMContentLoaded",initializeLoader);
+
+})));
