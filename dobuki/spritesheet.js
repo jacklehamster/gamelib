@@ -21,7 +21,7 @@
         'setup.js',
         'threejs',
         'packer.js',
-        'imageloader.js',
+        'loader.js',
     ]);
     core.logScript();
 
