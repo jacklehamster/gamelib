@@ -169,6 +169,12 @@
     SpriteObject.prototype.img = -1;
     SpriteObject.prototype.offset = null;
 
+    function createSpriteObject(
+        x,y,z,width,height,quaternionArray,light, img
+    ) {
+        return core.create(SpriteObject).init(x,y,z,width,height,quaternionArray,light, img);
+    }
+
     /**
      *  FUNCTION DEFINITIONS
      */
@@ -430,6 +436,7 @@
     core.SpriteRenderer = SpriteRenderer;
     core.SpriteObject = SpriteObject;
     core.setIndexProcessor = setIndexProcessor;
+    core.createSpriteObject = createSpriteObject;
     core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
 
     /**
