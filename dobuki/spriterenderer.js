@@ -104,11 +104,12 @@
                     image.light = spriteObject.light;
                     image.lightDirty = true;
                 }
+                image.spriteObject = spriteObject;
                 self.imageOrder[index] = image;
                 self.imageCount++;
             }
             return image;
-        }
+        };
 
         spriteRenderers.push(this);
     }
@@ -143,6 +144,7 @@
     SpriteImage.prototype.uvDirty = true;
     SpriteImage.prototype.lightDirty = true;
     SpriteImage.prototype.quatDirty = true;
+    SpriteImage.prototype.spriteObject = null;
 
     function SpriteObject() {
         this.position = new THREE.Vector3();

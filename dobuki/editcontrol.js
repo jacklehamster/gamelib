@@ -120,12 +120,16 @@
             var camera = core.getCamera();
             var dx = e.pageX - point.x;
             var dy = e.pageY - point.y;
-            camera.translateX(-dx*10);
+//            camera.translateX(-dx*10);
+            var precamZ = camera.position.z;
+            camera.position.x += -dx*10;
             if(DOK.anyKeyPressed(16)) {
                 camera.translateZ(-dy*10);
             } else {
-                camera.translateY(dy*10);
+//                camera.translateY(dy*10);
+                camera.position.y += (dy*10);
             }
+            camera.position.z = precamZ;
             point.x = e.pageX;
             point.y = e.pageY;
         } else {

@@ -8,7 +8,7 @@ onmessage = function(e) {
         plasterPixels(frameInfo, cData, header);
     }
     postMessage({id:id, cData: cData, frameInfo: frameInfo },[cData.data.buffer]);
-}
+};
 
 function plasterPixels(frameInfo, cData, header) {
     var img = frameInfo.img;

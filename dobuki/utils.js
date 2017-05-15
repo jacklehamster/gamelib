@@ -29,7 +29,7 @@
         Array.prototype.getFrame = function (index) {
             index = index|0;
             return this[index % this.length];
-        }
+        };
         Number.prototype.getFrame = function () {
             return this;
         }
