@@ -170,9 +170,15 @@
             outputCanvas.width = canvas.width;
             outputCanvas.height = canvas.height;
             initCanvas(outputCanvas);
+            var borderWidth = processString.split(":")[1] || 1;
+            if(borderWidth.indexOf("%")>0) {
+                borderWidth = Math.round(parseFloat(borderWidth.split("%")[0]) / 100 * Math.min(outputCanvas.width, outputCanvas.height));
+            }
             outputCtx.drawImage(canvas,0,0);
             outputCtx.beginPath();
-            outputCtx.rect(0,0,canvas.width-1,canvas.height-1);
+            for(var i=0;i<borderWidth;i++) {
+                outputCtx.rect(i,i,canvas.width-1-i*2,canvas.height-1-i*2);
+            }
             outputCtx.stroke();
         } else if(processString.indexOf("text:")===0) {
             outputCanvas.width = canvas.width;
@@ -246,6 +252,7 @@
         if(!cut.cut[frame]) {
             cut.cut[frame] = {
                 tex: 0, uv: null, ready: false,
+                url: url, baseUrl: null,
             };
         }
 
@@ -263,7 +270,7 @@
             var cutcut = [ uvX, 1-uvY-uvH, uvX+uvW, 1-uvY ];
 
             cut.animated = canvas.getAttribute("animated")==="true";
-            cut.baseUrl = canvas.getAttribute("base-url");
+            cut.cut[frame].baseUrl = cut.baseUrl = canvas.getAttribute("base-url");
             cut.cut[frame].tex = slot.tex;
             cut.cut[frame].uv = new Float32Array(uvOrder.length);
             for(var u=0; u<uvOrder.length; u++) {
@@ -298,6 +305,7 @@
                     }
                 }
             }
+            console.log(root);
             return root;
         }
     }
