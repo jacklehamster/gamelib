@@ -34,7 +34,7 @@
             }
             mdown = true;
             for(var i=0;i<callbacks.length;i++) {
-                callbacks[i](null,null,true);
+                callbacks[i](null,null,true,e.pageX,e.pageY);
             }
         }
         e.preventDefault();
@@ -55,7 +55,7 @@
         }
 
         for(var i=0;i<callbacks.length;i++) {
-            callbacks[i](null,null, hasTouch);
+            callbacks[i](null,null, hasTouch,e.pageX,e.pageY);
         }
         mdown = false;
         e.preventDefault();
@@ -72,10 +72,13 @@
                 spot.x = newX;
                 spot.y = newY;
                 for(var i=0;i<callbacks.length;i++) {
-                    callbacks[i](dx,dy,true);
+                    callbacks[i](dx,dy,true,e.pageX,e.pageY);
                 }
             } else {
                 mdown = false;
+                for(var i=0;i<callbacks.length;i++) {
+                    callbacks[i](dx,dy,false,e.pageX,e.pageY);
+                }
             }
         } else if(mdown) {
             var dx = 0, dy = 0;
@@ -87,7 +90,7 @@
                 touchSpotY[touch.identifier] = touch.pageY;
             }
             for(var i=0;i<callbacks.length;i++) {
-                callbacks[i](dx,dy,true);
+                callbacks[i](dx,dy,true,e.pageX,e.pageY);
             }
         }
         e.preventDefault();

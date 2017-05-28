@@ -86,6 +86,7 @@
         setCamera3d(data.is3d);
         camera.quaternion.fromArray(data.quaternion);
         camera.position.fromArray(data.position);
+        camera.updateProjectionMatrix();
     }
 
     function shadowQuatArray(x, y) {
