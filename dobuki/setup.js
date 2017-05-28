@@ -37,7 +37,7 @@
    }
    
    function changeScene(scene, htmlFile) {
-        if(typeof(htmlFile)=='undefined') {
+        if(typeof(htmlFile)==='undefined') {
             htmlFile = 'scene.html';
         }
         core.destroyEverything();
