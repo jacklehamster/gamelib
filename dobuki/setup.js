@@ -89,6 +89,7 @@
    
    var loadedScripts = {};
    function requireScripts(scripts) {
+       return;
         scripts.forEach(checkScriptLoaded);
    }
    
