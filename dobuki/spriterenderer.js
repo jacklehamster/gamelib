@@ -202,9 +202,9 @@
 
         core.loadAsync(
             [
-                currentScript.path + "vertex-shader.glsl",
-                currentScript.path + "fragment-shader.glsl",
-                currentScript.path + "vertex-shader-common.glsl",
+                require.toUrl("vertex-shader.glsl"),
+                require.toUrl("fragment-shader.glsl"),
+                require.toUrl("vertex-shader-common.glsl"),
             ],
             function(vertexShader, fragmentShader, vertexShaderCommon) {
                 mesh.material = new THREE.ShaderMaterial( {

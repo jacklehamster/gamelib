@@ -4,19 +4,19 @@
  	(factory((global.DOK = global.DOK || {})));
  }(this, (function (core) { 'use strict';
  
-   var coreLoops = null;
-   var frame = 0;
-   var fps = 0;
-   var period = Math.floor(1000/60);
-   var nextTime = 0;
-   var lastCount = 0;
-   
-   var frameCount = 0;
-   
-   /**
+    var coreLoops = null;
+    var frame = 0;
+    var fps = 0;
+    var period = Math.floor(1000/60);
+    var nextTime = 0;
+    var lastCount = 0;
+
+    var frameCount = 0;
+
+    /**
     *  FUNCTION DEFINITIONS
     */
-   function loop(time) {
+    function loop(time) {
         if(coreLoops) {
             var loops = coreLoops;
             requestAnimationFrame( loop );
@@ -34,17 +34,17 @@
                 lastCount = time;
             }
         }
-   }
-   
-   function addLoop(callback) {
+    }
+
+    function addLoop(callback) {
         if(coreLoops===null) {
             coreLoops = [];
             beginLoop();
         }
         coreLoops.push(callback);
-   }
-   
-   function removeLoop(callback) {
+    }
+
+    function removeLoop(callback) {
         if(coreLoops) {
             var index = coreLoops.indexOf(callback);
             coreLoops.splice(index, 1);
@@ -52,17 +52,17 @@
                 coreLoops = null;
             }
         }
-   }
-    
-   function beginLoop() {
+    }
+
+    function beginLoop() {
         loop(0);
-   }
-    
-   function loopTime() {
+    }
+
+    function loopTime() {
         return performance.now() - core.time;
-   }
-   
-   function destroyEverything() {
+    }
+
+    function destroyEverything() {
         coreLoops = null;
         frame = 0;
         fps = 0;
@@ -70,15 +70,15 @@
         nextTime = 0;
         lastCount = 0;
         frameCount = 0;
-   }
-        
-   /**
+    }
+
+    /**
     *  PUBLIC DECLARATIONS
     */
-   core.addLoop = addLoop;
-   core.removeLoop = removeLoop;
-   core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
-   
+    core.addLoop = addLoop;
+    core.removeLoop = removeLoop;
+    core.destroyEverything = core.combineMethods(destroyEverything, core.destroyEverything);
+
     Object.defineProperty(core, "fps", {
         enumerable: false,
         configurable: false,
@@ -89,13 +89,13 @@
             period = Math.floor(1000/value);
         }
     });
-   
 
-   /**
+
+    /**
     *   PROCESSES
     */
-   core.requireScripts(['setup.js']);
-   core.logScript();
-   core.time = 0;
+    core.requireScripts(['setup.js']);
+    core.logScript();
+    core.time = 0;
 
  })));

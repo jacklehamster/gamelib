@@ -1,9 +1,10 @@
 (function (global, factory) {
+    console.log(typeof(exports), typeof(define), global);
+
  	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
  	typeof define === 'function' && define.amd ? define(['exports'], factory) :
  	(factory((global.DOK = global.DOK || {})));
  }(this, (function (core) { 'use strict';
-
     /**
      *  FUNCTION DEFINITIONS
      */
@@ -119,7 +120,7 @@
    }
 
    function checkParams(args) {
-        assert(typeof(args) == 'object', "Pass 'arguments' to expectParams");
+        assert(typeof(args) === 'object', "Pass 'arguments' to expectParams");
         
         for(var i=1; i<arguments.length; i++) {
             var type = args[i-1]===null? 'null' : Array.isArray(args[i-1])?'array' : typeof(args[i-1]);
