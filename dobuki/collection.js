@@ -101,7 +101,7 @@
     }
 
     function createSpriteCollection(options) {
-        var spriteMap = [];
+        var spriteHash = [];
         var areaSize = 50;
         var spriteRegistry = {};
         var cellSize = 64;
@@ -129,20 +129,16 @@
         }
         SpriteInfo.prototype.leaveArea = function() {
             var areaId = getAreaId(this.x,this.y);
-            var area = spriteMap[areaId];
+            var area = spriteHash[areaId];
             if(area) {
-                var posId = Math.floor(this.x) + "_" + Math.floor(this.y);
-                if(area[posId])
-                    delete area[posId][this.uid];
+                delete area[this.uid];
             }
         };
         SpriteInfo.prototype.enterArea = function(x,y) {
             this.x = x; this.y = y;
             var areaId = getAreaId(this.x,this.y);
             var area = spriteMap[areaId] || (spriteMap[areaId] = {});
-            var posId = Math.floor(this.x) + "_" + Math.floor(this.y);
-            area[posId] = area[posId] || (area[posId] = {});
-            area[posId][this.uid] = this;
+            area[this.uid] = this;
         };
         SpriteInfo.prototype.move = function(x,y) {
             this.leaveArea();
